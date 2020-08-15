@@ -34,19 +34,6 @@ namespace fs = std::filesystem;
 
 int main(int, char*[])
 {
-
-	/*typedef stack< Index, vector< Index > > SStack;
-	typedef FastStack< Index >              FStack;
-
-	test< SStack >("std::stack");
-	test< FStack >("FastStack");
-
-	cout << "Done";*/
-
-#if __APPLE__
-    SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl");
-#endif
-    
 	//fs::create_directories("sandbox/a/b");
 	//std::ofstream("sandbox/file1.txt");
 	//std::ofstream("sandbox/file2.txt");
@@ -73,7 +60,7 @@ int main(int, char*[])
         
 		const Uint64 fps_start = SDL_GetPerformanceCounter(); // fps counter
 
-		BRUSH_UPDATE = 0; // reset brush update
+		BRUSH_UPDATE = false; // reset brush update
 
 		float t_win_w = (float)WINDOW_W, t_win_h = (float)WINDOW_H; // temporary window size
 
@@ -120,14 +107,8 @@ int main(int, char*[])
 
 		if (CANVAS_PREVW != CANVAS_W || CANVAS_PREVH != CANVAS_H)
 		{
-			UNDO_POS = 0;
-			UNDO_LIST.clear();
-			UNDO_DATA _u1{ 0, 0 };
-			_u1.x = 0;
-			_u1.y = 0;
-			_u1.w = 0;
-			_u1.h = 0;
-			UNDO_LIST.push_back(std::move(_u1));
+			clear_undo_stack();
+
 			CANVAS_PITCH = (sizeof(COLOR) * CANVAS_W);
 			BRUSH_PIXELS = nullptr;
 			BRUSH_PIXELS = std::make_unique<COLOR[]>(CANVAS_W * CANVAS_H);

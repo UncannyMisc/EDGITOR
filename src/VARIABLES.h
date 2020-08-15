@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <deque>
+#include <filesystem>
 
 struct SDL_Renderer;
 struct SDL_Texture;
@@ -126,8 +127,6 @@ const uint8_t CHAR_ARWL = 0x1b;
 #define STR_ARWL "\x1b"
 const uint8_t CHAR_ARWR = 0x1a;
 #define STR_ARWR "\x1a"
-
-extern bool DEBUG_BOOL;
 
 /*
 

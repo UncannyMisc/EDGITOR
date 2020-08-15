@@ -1,5 +1,6 @@
 #include "BRUSH.h"
 #include "COLOR.h"
+#include "RECT.h"
 
 // manpat: really not a fan of this - this should be cmakes job :(
 #ifdef __APPLE__
@@ -11,22 +12,17 @@
 
 SDL_Texture* BRUSH_CURSOR_TEXTURE;
 SDL_Texture* BRUSH_TEXTURE;
-bool BRUSH_UPDATE = 0;
+bool BRUSH_UPDATE = false;
 
 int16_t BRUSH_X = 0;
 int16_t BRUSH_Y = 0;
 uint16_t BRUSH_W = 0;
-int16_t BRUSH_UPDATE_X1 = INT16_MAX;
-int16_t BRUSH_UPDATE_Y1 = INT16_MAX;
-int16_t BRUSH_UPDATE_X2 = INT16_MIN;
-int16_t BRUSH_UPDATE_Y2 = INT16_MIN;
+RECT BRUSH_UPDATE_REGION = RECT::empty();
 std::unique_ptr<COLOR[]> BRUSH_PIXELS;
 COLOR BRUSH_COLOR {255, 255, 255, 128};
 COLOR UNDO_COLOR{255, 0, 64, 192};
 COLOR* BRUSH_CURSOR_PIXELS;
 COLOR* BRUSH_CURSOR_PIXELS_CLEAR;
-SDL_Rect BRUSH_CURSOR_PIXELS_CLEAR_RECT;
-uint16_t BRUSH_CURSOR_PIXELS_CLEAR_POS;
 
 
 std::vector<std::unique_ptr<BRUSH_DATA>> BRUSH_LIST;

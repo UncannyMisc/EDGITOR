@@ -1,9 +1,10 @@
 #include "CANVAS.h"
 #include "COLOR.h"
+#include "RECT.h"
 #include "VARIABLES.h"
 #include "BRUSH.h"
-#include <stack>
 #include "SUPERSTACK.h"
+#include <stack>
 
 
 // CANVAS
@@ -48,10 +49,7 @@ float CELL_H_ANIM = 0.0;
 uint16_t CURRENT_LAYER = 0;
 COLOR* CURRENT_LAYER_PTR = nullptr;
 int16_t LAYER_UPDATE = 0;
-int16_t LAYER_UPDATE_X1 = INT16_MAX;
-int16_t LAYER_UPDATE_Y1 = INT16_MAX;
-int16_t LAYER_UPDATE_X2 = INT16_MIN;
-int16_t LAYER_UPDATE_Y2 = INT16_MIN;
+RECT LAYER_UPDATE_REGION = RECT::empty();
 std::vector<LAYER_INFO> LAYERS;
 
 
@@ -67,7 +65,7 @@ void layer_new(SDL_Renderer* _renderer, int16_t _x, int16_t _y, int16_t _a, /*SD
 	new_layer.alpha = _a;
 	new_layer.blendmode = _b;
 	LAYERS.push_back(std::move(new_layer));
-	CANVAS_UPDATE = 1;
+	CANVAS_UPDATE = true;
 	CURRENT_LAYER = 0;
 	CURRENT_LAYER_PTR = LAYERS[CURRENT_LAYER].pixels.get();
 }
@@ -87,10 +85,7 @@ void set_pixel(const int16_t x, const int16_t y, const COLOR c)
 	if (out_canvas(x, y)) return;
 
 	BRUSH_PIXELS[y * CANVAS_W + x] = c;
-	BRUSH_UPDATE_X1 = std::min(BRUSH_UPDATE_X1, int16_t(x - 1));
-	BRUSH_UPDATE_Y1 = std::min(BRUSH_UPDATE_Y1, int16_t(y - 1));
-	BRUSH_UPDATE_X2 = std::max(BRUSH_UPDATE_X2, int16_t(x + 1));
-	BRUSH_UPDATE_Y2 = std::max(BRUSH_UPDATE_Y2, int16_t(y + 1));
+	BRUSH_UPDATE_REGION = BRUSH_UPDATE_REGION.include_point(x, y);
 }
 
 void set_pixel_brush(int x, int y, COLOR c)
@@ -115,10 +110,7 @@ void set_pixel_layer(const int16_t x, const int16_t y, const COLOR c, uint16_t l
 	if (out_canvas(x, y)) return;
 
 	LAYERS[l].pixels[y * CANVAS_W + x] = c;
-	BRUSH_UPDATE_X1 = std::min(BRUSH_UPDATE_X1, int16_t(x - 1));
-	BRUSH_UPDATE_Y1 = std::min(BRUSH_UPDATE_Y1, int16_t(y - 1));
-	BRUSH_UPDATE_X2 = std::max(BRUSH_UPDATE_X2, int16_t(x + 1));
-	BRUSH_UPDATE_Y2 = std::max(BRUSH_UPDATE_Y2, int16_t(y + 1));
+	BRUSH_UPDATE_REGION = BRUSH_UPDATE_REGION.include_point(x, y);
 }
 
 void set_pixel_line(int16_t x0, int16_t y0, const int16_t x1, const int16_t y1, COLOR c)
@@ -133,7 +125,7 @@ void set_pixel_line(int16_t x0, int16_t y0, const int16_t x1, const int16_t y1, 
 		if (e2 >= dy) { err += dy; x0 += sx; }
 		if (e2 <= dx) { err += dx; y0 += sy; }
 	}
-	BRUSH_UPDATE = 1;
+	BRUSH_UPDATE = true;
 	LAYER_UPDATE = 2;
 }
 
@@ -168,7 +160,7 @@ void floodfill(uint16_t x, uint16_t y, const uint16_t width, const uint16_t heig
 		if (x == ox && y == oy) break;
 	}
 	floodfill_core(x, y, width, height, col_old, col_new);
-	BRUSH_UPDATE = 1;
+	BRUSH_UPDATE = true;
 	LAYER_UPDATE = 2;
 }
 
@@ -274,8 +266,8 @@ void floodfill(int x, int y, COLOR oldColor, COLOR newColor)
 			x1++;
 		}
 	}
-	BRUSH_UPDATE = 1;
+	BRUSH_UPDATE = true;
 	LAYER_UPDATE = 2;
-	CANVAS_UPDATE = 1;
+	CANVAS_UPDATE = true;
 }
 

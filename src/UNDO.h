@@ -4,42 +4,40 @@
 #include <cstdint>
 
 #include "COLOR.h"
+#include "RECT.h"
 
-struct SDL_Rect;
-
-struct UNDO_DATA
+struct UNDO_ENTRY
 {
-	uint16_t layer = 0;
-	uint16_t x = 0;
-	uint16_t y = 0;
-	uint16_t w;
-	uint16_t h;
+	RECT affected_region;
+	uint16_t affected_layer = 0;
+
 	std::vector<COLOR> undo_pixels;
 	std::vector<COLOR> redo_pixels;
 
-	UNDO_DATA(uint16_t _w, uint16_t _h)
-		: w {_w}
-		, h {_h}
-		, undo_pixels(_w*_h)
-		, redo_pixels(_w*_h)
+	UNDO_ENTRY(RECT _rect, uint16_t _layer)
+		: affected_region {_rect}
+		, affected_layer {_layer}
+		, undo_pixels(_rect.width()*_rect.height())
+		, redo_pixels(_rect.width()*_rect.height())
 	{
 	}
 
 	void set(uint16_t xx, uint16_t yy, COLOR prev_col, COLOR new_col)
 	{
-		int index = xx + yy * this->w;
-		undo_pixels[index] = prev_col;
-		redo_pixels[index] = new_col;
+		int index = xx + yy * this->affected_region.width();
+		this->undo_pixels[index] = prev_col;
+		this->redo_pixels[index] = new_col;
 	}
 };
 
 
-void function_undo(int n);
+void push_undo_entry(UNDO_ENTRY);
+void clear_undo_stack();
+
+// NOTE: these names are way too short but I couldn't think of anything better
+void undo();
+void redo();
 
 
-
-extern std::vector<UNDO_DATA> UNDO_LIST;
-extern uint16_t UNDO_POS;
-extern uint16_t UNDO_UPDATE;
 extern uint16_t UNDO_UPDATE_LAYER;
-extern SDL_Rect UNDO_UPDATE_RECT;
+extern RECT UNDO_UPDATE_REGION;
