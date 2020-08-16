@@ -43,7 +43,10 @@ int main(int, char*[])
 		std::cout << p.path() << " : " << ((float)p.file_size())/1000.0f << "KB" << '\n';*/
 
 	// MAIN INIT
-	INIT_SDL();
+	if (!INIT_SDL())
+	{
+		PRINT("COULD NOT START");
+	}
 	auto WINDOW = INIT_WINDOW();
 	RENDERER = INIT_RENDERER(WINDOW);
 	FONTMAP = INIT_FONT();
@@ -83,9 +86,35 @@ int main(int, char*[])
 
 		SYSTEM_INPUT_UPDATE();
 
-		SYSTEM_BRUSH_UPDATE();
-		SYSTEM_LAYER_UPDATE();
-		SYSTEM_CANVAS_UPDATE();
+		if (!(MOUSE_X > 0 && MOUSE_X < WINDOW_W - 1 && MOUSE_Y > 0 && MOUSE_Y < WINDOW_H - 1))
+		{
+			MOUSEBUTTON_LEFT = false;
+			MOUSEBUTTON_PRESSED_LEFT = false;
+			MOUSEBUTTON_MIDDLE = false;
+			MOUSEBUTTON_PRESSED_MIDDLE = false;
+			MOUSEBUTTON_RIGHT = false;
+			MOUSEBUTTON_PRESSED_RIGHT = false;
+			MOUSEWHEEL_X = 0;
+			MOUSEWHEEL_Y = 0;
+
+			KEYBOARD_CTRL = false;
+			KEYBOARD_PRESSED_CTRL = false;
+			KEYBOARD_SHIFT = false;
+			KEYBOARD_PRESSED_SHIFT = false;
+			KEYBOARD_ALT = false;
+			KEYBOARD_PRESSED_ALT = false;
+
+			KEYBOARD_SPACE = false;
+			KEYBOARD_PRESSED_SPACE = false;
+			KEYBOARD_ESC = false;
+			KEYBOARD_PRESSED_ESC = false;
+		}
+		else
+		{
+			SYSTEM_BRUSH_UPDATE();
+			SYSTEM_LAYER_UPDATE();
+			SYSTEM_CANVAS_UPDATE();
+		}
 
 		///////////////////////////////////////////////// ///////  //////   /////    ////     ///      //       /
 

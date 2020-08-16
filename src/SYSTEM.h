@@ -5,7 +5,11 @@ struct SDL_Renderer;
 struct SDL_Texture;
 struct UIBOX_INFO;
 
-void INIT_SDL();
+void PRINT(std::string print);
+void PRINT(const char* print);
+void PRINT(int print);
+
+bool INIT_SDL();
 SDL_Window* INIT_WINDOW();
 SDL_Renderer* INIT_RENDERER(SDL_Window* WINDOW);
 SDL_Texture* INIT_FONT();

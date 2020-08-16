@@ -29,15 +29,62 @@ UIBOX_INFO* UIBOX_CANVAS;
  //   INITIALISATION   ///////////////////////////////////////////////// ///////  //////   /////    ////     ///      //       /
 //
 
-void INIT_SDL()
+void PRINT(std::string print)
 {
-	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
-	SDL_SetHint(SDL_HINT_WINDOWS_DISABLE_THREAD_NAMING, "1");
-	SDL_SetHint(SDL_HINT_FRAMEBUFFER_ACCELERATION, "opengl");
-	SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl");
+	std::cout << print << std::endl;
+}
 
-	SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO);
-	TTF_Init();
+void PRINT(const char* print)
+{
+	std::cout << print << std::endl;
+}
+
+void PRINT(int print)
+{
+	std::cout << print << std::endl;
+}
+
+bool INIT_SDL()
+{
+	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) < 0) {
+		PRINT("SDL COULD NOT INITIALISE");
+		PRINT(SDL_GetError());
+		return false;
+	}
+	else {
+		if (!SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0")) PRINT("WARNING: SDL_HINT_RENDER_SCALE_QUALITY NOT SET");
+		if (!SDL_SetHint(SDL_HINT_WINDOWS_DISABLE_THREAD_NAMING, "1")) PRINT("WARNING: SDL_HINT_WINDOWS_DISABLE_THREAD_NAMING NOT SET");
+		if (!SDL_SetHint(SDL_HINT_FRAMEBUFFER_ACCELERATION, "opengl")) PRINT("WARNING: SDL_HINT_FRAMEBUFFER_ACCELERATION NOT SET");
+		if (!SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl")) PRINT("WARNING: SDL_HINT_RENDER_DRIVER NOT SET");
+		if (!SDL_SetHint(SDL_HINT_VIDEO_WINDOW_SHARE_PIXEL_FORMAT, "1")) PRINT("WARNING: SDL_HINT_VIDEO_WINDOW_SHARE_PIXEL_FORMAT NOT SET");
+		if (!SDL_SetHint(SDL_HINT_VIDEO_DOUBLE_BUFFER, "1")) PRINT("WARNING: SDL_HINT_VIDEO_DOUBLE_BUFFER NOT SET");
+		if (!SDL_SetHint(SDL_HINT_RENDER_VSYNC, "1")) PRINT("WARNING: SDL_HINT_RENDER_VSYNC NOT SET");
+
+		//Initialize PNG loading
+		int imgFlags = IMG_INIT_PNG;
+		if (!(IMG_Init(imgFlags) & imgFlags)) {
+			PRINT("SDL_IMAGE COULD NOT INITIALISE");
+			PRINT(SDL_GetError());
+			return false;
+		}
+		else {
+			if (TTF_Init() < 0) {
+				PRINT("SDL_TTF COULD NOT INITIALISE");
+				PRINT(SDL_GetError());
+				return false;
+			}
+		}
+	}
+
+	/*if (success)
+	{
+		file_add("hello", "test");
+		PRINT(FILES.size());
+		PRINT(FILES[0]->frames.size());
+		PRINT(FILES[0]->frames[0]->layers.size());
+	}*/
+
+	return true;
 }
 
 SDL_Window* INIT_WINDOW()
@@ -78,8 +125,16 @@ SDL_Renderer* INIT_RENDERER(SDL_Window* WINDOW)
 	layer_new(RENDERER, 0, 0, 255, SDL_BLENDMODE_BLEND);
 
 	// TERMINAL FONT
-	std::string FONT_path	= std::string(RESOURCES_PATH) + "/FONT.ttf";
-	FONT = TTF_OpenFont(FONT_path.c_str(), 16);
+	FONT = TTF_OpenFont("resources/FONT.ttf", 16);
+	if (FONT == NULL)
+	{
+		std::cout << std::endl << "COPY THE RESOURCES FOLDER TO THE BUILD FOLDER" << std::endl << std::endl;
+		SDL_SetWindowOpacity(WINDOW, 0.0f);
+		while (1)
+		{
+			//
+		}
+	}
 	int _tfw, _tfh;
 	TTF_SizeText(FONT, "A", &_tfw, &_tfh);
 	FONT_CHRW = (uint16_t)_tfw;

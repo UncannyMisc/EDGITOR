@@ -242,8 +242,8 @@ void SYSTEM_UIBOX_UPDATE()
 			SDL_SetRenderDrawColor(RENDERER, 255, 255, 255, 255);
 
 			uint16_t j;
-			do { // do the whole loop so we don't have to wait for the windows to appear upon opening the app
-				if (uibox->update_stack.size())
+			//do { // do the whole loop so we don't have to wait for the windows to appear upon opening the app
+				while (uibox->update_stack.size())
 				{
 					if (uibox->update_tick <= 0)
 					{
@@ -272,12 +272,12 @@ void SYSTEM_UIBOX_UPDATE()
 					}
 					else uibox->update_tick--;
 				}
-				else
-				{
+				//else
+				//{
 					uibox->update = false;
 					uibox->creation_update = false;
-				}
-			} while (uibox->creation_update); // only happens the moment a window is created
+				//}
+			//} while (uibox->creation_update); // only happens the moment a window is created
 
 			SDL_SetRenderTarget(RENDERER, nullptr);
 		}
