@@ -45,14 +45,9 @@ std::vector<std::unique_ptr<UIBOX_INFO>> UIBOXES;
 std::vector<std::pair<std::string, bool>> PATH_FILES;
 
 
-// NOTE(manpat): This is not strictly correct but is the best I can do for now.
-// The correct solution would be to use std::filesystem::path everywhere instead of doing path stuff
-// manually, but that's a much larger job than I have time for atm
-const auto PATH_SEP = static_cast<char>(std::filesystem::path::preferred_separator);
-
-
 void UPDATE_PATH_FILES()
 {
+	//PRINT("UPDATED PATH FILES");
 	int _folders = 0;
 	PATH_FILES.clear();
 	for (auto& p : std::filesystem::directory_iterator(std::filesystem::current_path()))
@@ -118,6 +113,7 @@ void SYSTEM_UIBOX_UPDATE()
 			{
 				int _tx, _ty;
 				std::string _tchar;
+				//[&] {
 				for (int si = 0; si < uibox->scroll_element_list.size(); si++)
 				{
 					_tx = uibox->element_list[uibox->scroll_element_list[si]]->x;
@@ -125,16 +121,17 @@ void SYSTEM_UIBOX_UPDATE()
 					_tchar = uibox->element_list[uibox->scroll_element_list[si]]->text;
 					for (uint16_t sj = 0; sj < _tchar.size(); sj++)
 					{
-						if (((sj + (_ty * uibox->chr_w + _tx)) % uibox->chr_w) > (uibox->chr_w - 4)) break;
-						uibox_set_char(UIBOX_FILES, sj + (_ty * UIBOX_FILES->chr_w + _tx), 32, COL_EMPTY, COL_BGUPDATE, 1);
+						if (((sj + (_ty * uibox->chr_w + _tx)) % uibox->chr_w) > (uibox->chr_w - 4)) break;// return;
+						uibox_set_char(uibox, sj + (_ty * uibox->chr_w + _tx), 32, COL_EMPTY, COL_BGUPDATE, 1);
 					}
 				}
+				//}();
 
-				UIBOX_FILES->element_update = true;
-				UIBOX_FILES->creation_update = true;
-				UIBOX_FILES->update = true;
+				uibox->element_update = true;
+				uibox->creation_update = true;
+				uibox->update = true;
 
-				uibox_update_files();
+				uibox_update_file_explorer();
 			}
 		}
 
@@ -233,7 +230,7 @@ void SYSTEM_UIBOX_UPDATE()
 		{
 			if (uibox->texture == nullptr)
 			{
-				uibox->texture = SDL_CreateTexture(RENDERER, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_TARGET, uibox->w, uibox->h);
+				uibox->texture = SDL_CreateTexture(RENDERER, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_TARGET, uibox->chr_w * FONT_CHRW, uibox->chr_h * FONT_CHRH);
 			}
 
 			SDL_SetTextureBlendMode(uibox->texture, SDL_BLENDMODE_BLEND);
@@ -245,8 +242,8 @@ void SYSTEM_UIBOX_UPDATE()
 			//do { // do the whole loop so we don't have to wait for the windows to appear upon opening the app
 				while (uibox->update_stack.size())
 				{
-					if (uibox->update_tick <= 0)
-					{
+					//if (uibox->update_tick <= 0)
+					//{
 						do
 						{
 							j = uibox->update_stack.top();
@@ -269,8 +266,8 @@ void SYSTEM_UIBOX_UPDATE()
 						SDL_RenderCopy(RENDERER, FONTMAP, &chr_rect, &rect);
 						uibox->update_tick = UIBOX_UPDATE_TICK;
 						_charinfo->update = false;
-					}
-					else uibox->update_tick--;
+					//}
+					//else uibox->update_tick--;
 				}
 				//else
 				//{
@@ -298,7 +295,28 @@ void SYSTEM_UIBOX_UPDATE()
 	//UIBOX_PREVIN = UIBOX_IN;
 }
 
+void uibox_shrink(UIBOX_INFO* uibox, bool s)
+{
+	uibox->shrink = s;
 
+	if (uibox->shrink)
+	{
+		uibox->h = FONT_CHRH;
+		uibox_set_char(uibox, 0, CHAR_BOXH, COL_EMPTY, COL_BGUPDATE, 1);
+		uibox_set_char(uibox, uibox->chr_w - 1, CHAR_BOXH, COL_EMPTY, COL_BGUPDATE, 1);
+		uibox_set_char(uibox, uibox->chr_w - 3, CHAR_ARWL, COL_EMPTY, COL_EMPTY, 1);
+	}
+	else
+	{
+		uibox->h = (uibox->chr_h * FONT_CHRH);
+		uibox_set_char(uibox, 0, CHAR_BOXTL, COL_EMPTY, COL_BGUPDATE, 1);
+		uibox_set_char(uibox, uibox->chr_w - 1, CHAR_BOXTR, COL_EMPTY, COL_BGUPDATE, 1);
+		uibox_set_char(uibox, uibox->chr_w - 3, CHAR_ARWD, COL_EMPTY, COL_EMPTY, 1);
+	}
+	uibox->update = true;
+	if (!uibox->shrink) uibox->element_update = true;
+	uibox->creation_update = true;
+}
 
 bool SYSTEM_UIBOX_HANDLE_MOUSE_DOWN(bool is_click, int mouse_x, int mouse_y)
 {
@@ -340,28 +358,11 @@ bool SYSTEM_UIBOX_HANDLE_MOUSE_DOWN(bool is_click, int mouse_x, int mouse_y)
 		// shrink [↓]
 		if (!uibox_click->in_grab && !uibox_click->grab && uibox_click->in_shrink)
 		{
-			uibox_click->shrink = !uibox_click->shrink;
-			uibox_click->h = (uibox_click->shrink) ? FONT_CHRH : (uibox_click->chr_h * FONT_CHRH);
-
-			if (uibox_click->shrink)
-			{
-				uibox_set_char(uibox_click, 0, CHAR_BOXH, COL_EMPTY, COL_BGUPDATE, 1);
-				uibox_set_char(uibox_click, uibox_click->chr_w - 1, CHAR_BOXH, COL_EMPTY, COL_BGUPDATE, 1);
-				uibox_set_char(uibox_click, uibox_click->chr_w - 3, CHAR_ARWL, COL_EMPTY, COL_EMPTY, 1);
-			}
-			else
-			{
-				uibox_set_char(uibox_click, 0, CHAR_BOXTL, COL_EMPTY, COL_BGUPDATE, 1);
-				uibox_set_char(uibox_click, uibox_click->chr_w - 1, CHAR_BOXTR, COL_EMPTY, COL_BGUPDATE, 1);
-				uibox_set_char(uibox_click, uibox_click->chr_w - 3, CHAR_ARWD, COL_EMPTY, COL_EMPTY, 1);
-			}
-			uibox_click->update = true;
-			if (!uibox_click->shrink) uibox_click->element_update = true;
-			uibox_click->creation_update = true;
+			uibox_shrink(uibox_click, !uibox_click->shrink);
 		}
 	}
-	else // !is_click
-	{
+	//else // !is_click
+	//{
 		UIBOX_INFO* uibox = UIBOXES[UIBOX_IN].get();
 		if (uibox->can_grab && uibox->grab && UIBOX_CLICKED_IN == UIBOX_IN)
 		{
@@ -369,7 +370,7 @@ bool SYSTEM_UIBOX_HANDLE_MOUSE_DOWN(bool is_click, int mouse_x, int mouse_y)
 			uibox->x = (MOUSE_X - UIBOX_PANX);
 			uibox->y = (MOUSE_Y - UIBOX_PANY);
 		}
-	}
+	//}
 
 	return ELEMENT_CLICKED_IN != -1 || UIBOX_CLICKED_IN != -1;
 }
@@ -381,23 +382,22 @@ void SYSTEM_UIBOX_HANDLE_MOUSE_UP()
 	ELEMENT_CLICKED_IN = -1;
 }
 
-void uibox_update_files()
+void uibox_update_file_explorer()
 {
-	if (!UIBOX_FILES->scroll_element_list.empty() && !UIBOX_FILES->element_list.empty())
+	if (!UIBOX_FILE_EXPLORER->scroll_element_list.empty() && !UIBOX_FILE_EXPLORER->element_list.empty())
 	{
 		int _offset = 0;
-		for (int i = 0; i < UIBOX_FILES->scroll_element_list.size(); i++)
+		for (int i = 0; i < UIBOX_FILE_EXPLORER->scroll_element_list.size(); i++)
 		{
-			UIBOX_FILES->element_list.erase(UIBOX_FILES->element_list.begin() + UIBOX_FILES->scroll_element_list[i - _offset]);
+			UIBOX_FILE_EXPLORER->element_list.erase(UIBOX_FILE_EXPLORER->element_list.begin() + UIBOX_FILE_EXPLORER->scroll_element_list[i - _offset]);
 			++_offset;
 		}
 	}
+	UIBOX_FILE_EXPLORER->scroll_element_list.clear();
 
-	UIBOX_FILES->can_scroll = true;
-	UIBOX_FILES->scroll_element_list.clear();
-	if (UIBOX_FILES->scroll_element_list_create)
+	if (UIBOX_FILE_EXPLORER->scroll_element_list_create)
 	{
-		UIBOX_FILES->element_list.clear();
+		UIBOX_FILE_EXPLORER->element_list.clear();
 		if (CURRENT_PATH.back() != PATH_SEP)
 		{
 			CURRENT_PATH += PATH_SEP;
@@ -410,46 +410,75 @@ void uibox_update_files()
 		{
 			if (*_htap == PATH_SEP && _tt)
 			{
-				uibox_add_element_button_files_goto(UIBOX_FILES, (_currentpath.size() - _tt) + 2, 2, 0, 1, _name, &CURRENT_PATH, CURRENT_PATH.substr(0, (_currentpath.size() - _tt) + _name.size()));
+				uibox_add_element_button_files_goto(UIBOX_FILE_EXPLORER, (_currentpath.size() - _tt) + 2, 2, 0, 1, _name, &CURRENT_PATH, CURRENT_PATH.substr(0, (_currentpath.size() - _tt) + _name.size()));
 				_name.clear();
 			}
 			_tt++;
 			_name.insert(_name.begin(), *_htap);
 		}
 
-		uibox_add_element_button_files_goto(UIBOX_FILES, (_currentpath.size() - _tt) + 2, 2, 0, 1, _name, &CURRENT_PATH, CURRENT_PATH.substr(0, (_currentpath.size() - _tt) + _name.size()));
-		uibox_add_element_textbox(UIBOX_FILES, 2, 3, STR_LINEV);
+		uibox_add_element_button_files_goto(UIBOX_FILE_EXPLORER, (_currentpath.size() - _tt) + 2, 2, 0, 1, _name, &CURRENT_PATH, CURRENT_PATH.substr(0, (_currentpath.size() - _tt) + _name.size()));
+		uibox_add_element_textbox(UIBOX_FILE_EXPLORER, 2, 3, STR_LINEV);
 		UPDATE_PATH_FILES();
 	}
-
+	//PRINT(UIBOX_FILE_EXPLORER->scroll_element_list_size);
+	UIBOX_FILE_EXPLORER->scroll_element_list_size = (uint16_t)PATH_FILES.size();
+	//PRINT(UIBOX_FILE_EXPLORER->scroll_element_list_size);
 	for (int _file = 0; _file < PATH_FILES.size(); ++_file)
 	{
-		if (UIBOX_FILES->scroll_element_list_create) UIBOX_FILES->scroll_element_list_size += 1;
-		if (!((_file - UIBOX_FILES->scroll_y) >= 0 && ((4 + _file) - UIBOX_FILES->scroll_y) < (UIBOX_FILES->chr_h - 1))) continue;
+		if (!((_file - UIBOX_FILE_EXPLORER->scroll_y) >= 0 && ((4 + _file) - UIBOX_FILE_EXPLORER->scroll_y) < (UIBOX_FILE_EXPLORER->chr_h - 1))) continue;
 
-		if (PATH_FILES[_file].first.size() > (UIBOX_FILES->chr_w - 6)) // shorten name if it's wider than uibox
+		if (PATH_FILES[_file].first.size() > (UIBOX_FILE_EXPLORER->chr_w - 6)) // shorten name if it's wider than uibox
 		{
-			PATH_FILES[_file].first.erase(UIBOX_FILES->chr_w - 10);
+			PATH_FILES[_file].first.erase(UIBOX_FILE_EXPLORER->chr_w - 10);
 			PATH_FILES[_file].first += "...";
 		}
 
 		if (PATH_FILES[_file].second)
 		{
-			uibox_add_element_button_files_goto(UIBOX_FILES, 2, (4 + _file) - UIBOX_FILES->scroll_y, 0, 1, (_file < (PATH_FILES.size() - 1) ? STR_LINEBL STR_ARWR " " : STR_LINEBL STR_ARWR " ") + PATH_FILES[_file].first + PATH_SEP, &CURRENT_PATH, CURRENT_PATH + PATH_FILES[_file].first);
+			uibox_add_element_button_files_goto(UIBOX_FILE_EXPLORER, 2, (4 + _file) - UIBOX_FILE_EXPLORER->scroll_y, 0, 1, (_file < (PATH_FILES.size() - 1) ? STR_LINEBL STR_ARWR " " : STR_LINEBL STR_ARWR " ") + PATH_FILES[_file].first + PATH_SEP, &CURRENT_PATH, CURRENT_PATH + PATH_FILES[_file].first);
 		}
 		else
 		{
 			std::string _tstr = PATH_FILES[_file].first.substr(PATH_FILES[_file].first.size() - 3, 3);
 			if (_tstr == "png" || _tstr == "PNG")
 			{
-				uibox_add_element_button_files_load(UIBOX_FILES, 2, (4 + _file) - UIBOX_FILES->scroll_y, 0, 1, (_file < (PATH_FILES.size() - 1) ? "\xc5 " : "\xc1 ") + PATH_FILES[_file].first, CURRENT_PATH + PATH_FILES[_file].first, PATH_FILES[_file].first);
+				uibox_add_element_button_files_load(UIBOX_FILE_EXPLORER, 2, (4 + _file) - UIBOX_FILE_EXPLORER->scroll_y, 0, 1, (_file < (PATH_FILES.size() - 1) ? "\xc5 " : "\xc1 ") + PATH_FILES[_file].first, CURRENT_PATH, PATH_FILES[_file].first);
 			}
 			else
-				uibox_add_element_textbox(UIBOX_FILES, 2, (4 + _file) - UIBOX_FILES->scroll_y, "\xb3 " + PATH_FILES[_file].first);
+				uibox_add_element_textbox(UIBOX_FILE_EXPLORER, 2, (4 + _file) - UIBOX_FILE_EXPLORER->scroll_y, "\xb3 " + PATH_FILES[_file].first);
 		}
-		UIBOX_FILES->scroll_element_list.push_back(UIBOX_FILES->element_list.size() - 1);
+		UIBOX_FILE_EXPLORER->scroll_element_list.push_back(UIBOX_FILE_EXPLORER->element_list.size() - 1);
 	}
-	UIBOX_FILES->scroll_element_list_create = 0;
+	UIBOX_FILE_EXPLORER->scroll_element_list_create = 0;
+}
+
+void uibox_update_open_files()
+{
+	UIBOX_OPEN_FILES->element_update = 1;
+	UIBOX_OPEN_FILES->update = 1;
+
+	int _tx, _ty;
+	std::string _tchar;
+	for (int el = 0; el < UIBOX_OPEN_FILES->element_list.size(); el++)
+	{
+		_tx = UIBOX_OPEN_FILES->element_list[el]->x;
+		_ty = UIBOX_OPEN_FILES->element_list[el]->y;
+		_tchar = UIBOX_OPEN_FILES->element_list[el]->text;
+		for (uint16_t sj = 0; sj < _tchar.size(); sj++)
+		{
+			if (((sj + (_ty * UIBOX_OPEN_FILES->chr_w + _tx)) % UIBOX_OPEN_FILES->chr_w) > (UIBOX_OPEN_FILES->chr_w - 4)) break;
+			uibox_set_char(UIBOX_OPEN_FILES, sj + (_ty * UIBOX_OPEN_FILES->chr_w + _tx), 32, COL_EMPTY, COL_BGUPDATE, 1);
+		}
+	}
+
+	UIBOX_OPEN_FILES->element_list.clear();
+
+	for (int i = 0; i < FILES.size(); i++)
+	{
+		uibox_add_element_textbox(UIBOX_OPEN_FILES, 2, 2 + i, FILES[i]->filename);
+	}
+	//PRINT(FILES.size());
 }
 
 UIBOX_INFO* uibox_new(uint16_t _x, uint16_t _y, uint16_t _w, uint16_t _h, bool can_grab, std::string title)
@@ -677,6 +706,7 @@ void uibox_update_element(int16_t uibox_in, int16_t element_in)
 	UIBOX_INFO* uibox = UIBOXES[uibox_in].get();
 
 	uibox->element_list[element_in]->set();
+	ELEMENT_CLICKED_IN = element_in;
 	//uibox->element_update = true;
 	//uibox->creation_update = true; // the whole window updates every time you click
 }

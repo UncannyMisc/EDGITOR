@@ -86,8 +86,8 @@ struct UIBOX_INFO {
 	uint16_t tex_h;
 	uint16_t chr_w;
 	uint16_t chr_h;
-	uint16_t x;
-	uint16_t y;
+	int x;
+	int y;
 	uint16_t w;
 	uint16_t h;
 	uint8_t alpha;
@@ -145,9 +145,11 @@ void UPDATE_PATH_FILES();
 void SYSTEM_UIBOX_UPDATE();
 
 // returns if the mouse input was claimed by a uibox
+void uibox_shrink(UIBOX_INFO* uibox, bool s);
 bool SYSTEM_UIBOX_HANDLE_MOUSE_DOWN(bool is_click, int mouse_x, int mouse_y);
 void SYSTEM_UIBOX_HANDLE_MOUSE_UP();
-void uibox_update_files();
+void uibox_update_file_explorer();
+void uibox_update_open_files();
 
 UIBOX_INFO* uibox_new(uint16_t _x, uint16_t _y, uint16_t _w, uint16_t _h, bool can_grab, std::string title);
 //void uibox_add_element(UIBOX_INFO* uibox, std::string text, std::string over_text, uint8_t type, bool* bool_ptr, uint16_t* int_ptr, uint16_t int_var, bool is_pos, uint16_t px, uint16_t py);
@@ -396,35 +398,35 @@ struct UIBOX_ELEMENT_BUTTON_FILES_GOTO : public UIBOX_ELEMENT_MAIN {
 
 		if (*input_var != button_var)
 		{
-			std::cout << *input_var << std::endl;
+			//std::cout << *input_var << std::endl;
 			*input_var = button_var;
 			std::filesystem::current_path(button_var);
-			std::cout << *input_var << std::endl;
+			//std::cout << *input_var << std::endl;
 
 			int _tx, _ty;
 			std::string _tchar;
-			for (int i = 0; i < UIBOX_FILES->element_list.size(); i++)
+			for (int i = 0; i < UIBOX_FILE_EXPLORER->element_list.size(); i++)
 			{
-				_tx = UIBOX_FILES->element_list[i]->x;
-				_ty = UIBOX_FILES->element_list[i]->y;
-				_tchar = UIBOX_FILES->element_list[i]->text;
+				_tx = UIBOX_FILE_EXPLORER->element_list[i]->x;
+				_ty = UIBOX_FILE_EXPLORER->element_list[i]->y;
+				_tchar = UIBOX_FILE_EXPLORER->element_list[i]->text;
 				for (uint16_t j = 0; j < _tchar.size(); j++)
 				{
 					// clearing the previous elements
-					uibox_set_char(UIBOX_FILES, j + (_ty * UIBOX_FILES->chr_w + _tx), 32, COL_EMPTY, COL_BGUPDATE, 1);
+					uibox_set_char(UIBOX_FILE_EXPLORER, j + (_ty * UIBOX_FILE_EXPLORER->chr_w + _tx), 32, COL_EMPTY, COL_BGUPDATE, 1);
 				}
 			}
 
-			UIBOX_FILES->element_update = true;
-			UIBOX_FILES->update = true;
+			UIBOX_FILE_EXPLORER->element_update = true;
+			UIBOX_FILE_EXPLORER->update = true;
 
-			UIBOX_FILES->scroll_x = 0;
-			UIBOX_FILES->scroll_y = 0;
-			UIBOX_FILES->scroll_element_list.clear();
-			UIBOX_FILES->scroll_element_list_create = 1;
-			UIBOX_FILES->scroll_element_list_size = 0;
+			UIBOX_FILE_EXPLORER->scroll_x = 0;
+			UIBOX_FILE_EXPLORER->scroll_y = 0;
+			UIBOX_FILE_EXPLORER->scroll_element_list.clear();
+			UIBOX_FILE_EXPLORER->scroll_element_list_create = 1;
+			UIBOX_FILE_EXPLORER->scroll_element_list_size = 0;
 
-			uibox_update_files();
+			uibox_update_file_explorer();
 		}
 		UPDATE_PATH_FILES();
 	}
@@ -445,34 +447,66 @@ struct UIBOX_ELEMENT_BUTTON_FILES_LOAD : public UIBOX_ELEMENT_MAIN {
 
 	void set() override
 	{
+		BRUSH_UPDATE = 0;
 		MOUSEBUTTON_LEFT = 0;
 		MOUSEBUTTON_PRESSED_LEFT = 0;
 
-		SDL_Surface* _surfload = IMG_Load(path.c_str());
-		SDL_Surface* _surf = SDL_ConvertSurfaceFormat(_surfload, SDL_PIXELFORMAT_RGBA32, 0);
+		bool _file_exists = 0;
 
-		CANVAS_W = _surf->w;
-		CANVAS_H = _surf->h;
-		SDL_FreeSurface(_surfload);
-		while (LAYERS.size() > 1)
+		for (int i=0; i < FILES.size(); ++i)
 		{
-			LAYERS.erase(LAYERS.end());
+			auto _f = FILES[i];
+			if ((_f->path + _f->filename) == (this->path + this->file))
+			{
+				CANVAS_UPDATE = true;
+				CURRENT_FILE = i;
+				CURRENT_FILE_PTR = _f;
+				CURRENT_FRAME = 0;
+				CURRENT_FRAME_PTR = _f->frames[0];
+				CURRENT_LAYER = 0;
+				CURRENT_LAYER_PTR = _f->frames[0]->layers[0];
+
+				refresh_canvas();
+
+				_file_exists = 1;
+				break;
+			}
 		}
-		CURRENT_LAYER = 0;
-		CURRENT_LAYER_PTR = LAYERS[CURRENT_LAYER].pixels.get();
 
-		LAYERS[CURRENT_LAYER].texture = SDL_CreateTextureFromSurface(RENDERER, _surf);
-		LAYERS[CURRENT_LAYER].pixels = nullptr;
-		LAYERS[CURRENT_LAYER].pixels = std::make_unique<COLOR[]>(CANVAS_W * CANVAS_H);
-
-		COLOR* layer_data = (LAYERS[CURRENT_LAYER].pixels.get());
-		for (int i = 0; i < CANVAS_W * CANVAS_H; i++)
+		if (!_file_exists)
 		{
+			SDL_Surface* _surfload = IMG_Load((path + file).c_str());
+			SDL_Surface* _surf = SDL_ConvertSurfaceFormat(_surfload, SDL_PIXELFORMAT_RGBA32, 0);
 
-			int bpp = _surf->format->BytesPerPixel;
-			uint8_t* p = (uint8_t*)_surf->pixels + i * bpp;
+			CANVAS_W = _surf->w;
+			CANVAS_H = _surf->h;
+			SDL_FreeSurface(_surfload);
+			/*while (LAYERS.size() > 1)
+			{
+				LAYERS.erase(LAYERS.end());
+			}
+			CURRENT_LAYER = 0;
+			CURRENT_LAYER_PTR = LAYERS[CURRENT_LAYER].pixels.get();
 
-			layer_data[i] = COLOR{ p[0], p[1], p[2], p[3] };
+			LAYERS[CURRENT_LAYER].texture = SDL_CreateTextureFromSurface(RENDERER, _surf);
+			LAYERS[CURRENT_LAYER].pixels = nullptr;
+			LAYERS[CURRENT_LAYER].pixels = std::make_unique<COLOR[]>(CANVAS_W * CANVAS_H);*/
+
+			file_add(path, file, CANVAS_W, CANVAS_H);
+
+			CURRENT_LAYER_PTR->texture = SDL_CreateTextureFromSurface(RENDERER, _surf);
+
+			auto layer_data = (CURRENT_LAYER_PTR->pixels);
+			for (int i = 0; i < CANVAS_W * CANVAS_H; i++)
+			{
+
+				int bpp = _surf->format->BytesPerPixel;
+				uint8_t* p = (uint8_t*)_surf->pixels + i * bpp;
+
+				layer_data[i] = COLOR{ p[0], p[1], p[2], p[3] };
+			}
+
+			uibox_update_open_files();
 		}
 
 		// CENTER CANVAS
@@ -485,8 +519,6 @@ struct UIBOX_ELEMENT_BUTTON_FILES_LOAD : public UIBOX_ELEMENT_MAIN {
 		CELL_W_ANIM = CELL_W;
 		CELL_H_ANIM = CELL_H;
 		CANVAS_ZOOM = 1;
-
-		CURRENT_FILE = file;
 	}
 };
 

@@ -4,8 +4,10 @@
 #include "VARIABLES.h"
 #include "BRUSH.h"
 #include "SUPERSTACK.h"
+#include "SYSTEM.h"
+#include "UNDO.h"
 #include <stack>
-
+#include <string>
 
 // CANVAS
 bool CANVAS_UPDATE = false;
@@ -44,17 +46,26 @@ float CANVAS_H_ANIM = 0.0;
 float CELL_W_ANIM = 0.0;
 float CELL_H_ANIM = 0.0;
 
+std::vector<std::shared_ptr<FILE_INFO>> FILES;
 
 // LAYER
 uint16_t CURRENT_LAYER = 0;
-COLOR* CURRENT_LAYER_PTR = nullptr;
+std::shared_ptr<LAYER_INFO> CURRENT_LAYER_PTR = nullptr;
 int16_t LAYER_UPDATE = 0;
 RECT LAYER_UPDATE_REGION = RECT::empty();
-std::vector<LAYER_INFO> LAYERS;
+//std::vector<LAYER_INFO> LAYERS;
+
+// FRAME
+uint16_t CURRENT_FRAME = 0;
+std::shared_ptr<FRAME_INFO> CURRENT_FRAME_PTR = nullptr;
+
+// FILE
+uint16_t CURRENT_FILE = 0;
+std::shared_ptr<FILE_INFO> CURRENT_FILE_PTR = nullptr;
 
 
 
-void layer_new(SDL_Renderer* _renderer, int16_t _x, int16_t _y, int16_t _a, /*SDL_BlendMode*/ int _b)
+/*void layer_new(SDL_Renderer* _renderer, int16_t _x, int16_t _y, int16_t _a, /*SDL_BlendMode* int _b)
 {
 	LAYER_INFO new_layer;
 	new_layer.texture = SDL_CreateTexture(_renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, CANVAS_W, CANVAS_H);
@@ -68,7 +79,7 @@ void layer_new(SDL_Renderer* _renderer, int16_t _x, int16_t _y, int16_t _a, /*SD
 	CANVAS_UPDATE = true;
 	CURRENT_LAYER = 0;
 	CURRENT_LAYER_PTR = LAYERS[CURRENT_LAYER].pixels.get();
-}
+}*/
 
 bool in_canvas(const uint16_t x, const uint16_t y)
 {
@@ -109,7 +120,7 @@ void set_pixel_layer(const int16_t x, const int16_t y, const COLOR c, uint16_t l
 {
 	if (out_canvas(x, y)) return;
 
-	LAYERS[l].pixels[y * CANVAS_W + x] = c;
+	CURRENT_FRAME_PTR->layers[l]->pixels[y * CANVAS_W + x] = c;
 	BRUSH_UPDATE_REGION = BRUSH_UPDATE_REGION.include_point(x, y);
 }
 
@@ -136,7 +147,7 @@ COLOR get_pixel(const int16_t x, const int16_t y)
 
 COLOR get_pixel_layer(const int16_t x, const int16_t y, uint16_t l)
 {
-	return LAYERS[l].pixels[y * CANVAS_W + x];
+	return CURRENT_FRAME_PTR->layers[l]->pixels[y * CANVAS_W + x];
 }
 
 /*bool floodfill_check(const uint16_t x, const uint16_t y, const COLOR col)
@@ -271,3 +282,65 @@ void floodfill(int x, int y, COLOR oldColor, COLOR newColor)
 	CANVAS_UPDATE = true;
 }
 
+void refresh_canvas()
+{
+	CANVAS_W = CURRENT_FILE_PTR->canvas_w;
+	CANVAS_H = CURRENT_FILE_PTR->canvas_h;
+
+	clear_undo_stack();
+
+	CANVAS_PITCH = (sizeof(COLOR) * CANVAS_W);
+	BRUSH_PIXELS = nullptr;
+	BRUSH_PIXELS = std::make_unique<COLOR[]>(CANVAS_W * CANVAS_H);
+	SDL_DestroyTexture(BRUSH_TEXTURE);
+	BRUSH_TEXTURE = SDL_CreateTexture(RENDERER, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, CANVAS_W, CANVAS_H);
+
+	if (CANVAS_PREVW && CANVAS_PREVH) SDL_DestroyTexture(BG_GRID_TEXTURE);
+	// BACKGROUND GRID TEXTURE
+	BG_GRID_W = ((int16_t)ceil((double)CANVAS_W / (double)CELL_W));
+	BG_GRID_H = ((int16_t)ceil((double)CANVAS_H / (double)CELL_H));
+	auto BG_GRID_PIXELS = std::make_unique<COLOR[]>(BG_GRID_W * BG_GRID_H);
+	BG_GRID_TEXTURE = SDL_CreateTexture(RENDERER, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STATIC, BG_GRID_W, BG_GRID_H);
+	for (int i = 0; i < BG_GRID_H; i++)
+	{
+		for (int j = 0; j < BG_GRID_W; j++)
+		{
+			const COLOR cell_colors[]{
+				COLOR {0x0c, 0x0c, 0x0c, 0xff},
+				COLOR {0x10, 0x10, 0x10, 0xff},
+			};
+
+			BG_GRID_PIXELS[i * BG_GRID_W + j] = cell_colors[(i + j) % 2];
+		}
+	}
+	SDL_SetTextureBlendMode(BG_GRID_TEXTURE, SDL_BLENDMODE_NONE);
+	SDL_UpdateTexture(BG_GRID_TEXTURE, nullptr, BG_GRID_PIXELS.get(), BG_GRID_W * sizeof(COLOR));
+}
+
+void file_add(std::string path, std::string filename, uint16_t canvas_w, uint16_t canvas_h)
+{
+	std::shared_ptr<FILE_INFO> _file = std::make_shared<FILE_INFO>();
+	_file->path = path;
+	_file->filename = filename;
+	_file->canvas_w = canvas_w;
+	_file->canvas_h = canvas_h;
+	CANVAS_W = canvas_w;
+	CANVAS_H = canvas_h;
+
+	CANVAS_UPDATE = true;
+	CURRENT_FILE = FILES.size();
+	CURRENT_FILE_PTR = _file;
+
+	_file->add_frame(1);
+
+	FILES.push_back(std::move(_file));
+
+	refresh_canvas();
+
+	/*PRINT(CURRENT_FILE);
+	PRINT((int)&CURRENT_FILE_PTR);
+	PRINT(CURRENT_FRAME);
+	PRINT((int)&CURRENT_FRAME_PTR);
+	PRINT(CURRENT_LAYER);
+	PRINT((int)&CURRENT_LAYER_PTR);*/
+}

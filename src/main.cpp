@@ -82,6 +82,11 @@ int main(int, char*[])
 			CANVAS_Y = (((float)WINDOW_H * .5f) - ((t_win_h * .5f) - CANVAS_Y));
 		}
 
+		if (CANVAS_PREVW != CANVAS_W || CANVAS_PREVH != CANVAS_H)
+		{
+			refresh_canvas();
+		}
+
 		///////////////////////////////////////////////// ///////  //////   /////    ////     ///      //       /
 
 		SYSTEM_INPUT_UPDATE();
@@ -134,38 +139,6 @@ int main(int, char*[])
 		
 		SDL_FRect F_RECT {};
 
-		if (CANVAS_PREVW != CANVAS_W || CANVAS_PREVH != CANVAS_H)
-		{
-			clear_undo_stack();
-
-			CANVAS_PITCH = (sizeof(COLOR) * CANVAS_W);
-			BRUSH_PIXELS = nullptr;
-			BRUSH_PIXELS = std::make_unique<COLOR[]>(CANVAS_W * CANVAS_H);
-			SDL_DestroyTexture(BRUSH_TEXTURE);
-			BRUSH_TEXTURE = SDL_CreateTexture(RENDERER, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, CANVAS_W, CANVAS_H);
-
-			if (CANVAS_PREVW && CANVAS_PREVH) SDL_DestroyTexture(BG_GRID_TEXTURE);
-			// BACKGROUND GRID TEXTURE
-			BG_GRID_W = ((int16_t)ceil((double)CANVAS_W / (double)CELL_W));
-			BG_GRID_H = ((int16_t)ceil((double)CANVAS_H / (double)CELL_H));
-			auto BG_GRID_PIXELS = std::make_unique<COLOR[]>(BG_GRID_W * BG_GRID_H);
-			BG_GRID_TEXTURE = SDL_CreateTexture(RENDERER, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STATIC, BG_GRID_W, BG_GRID_H);
-			for (int i = 0; i < BG_GRID_H; i++)
-			{
-				for (int j = 0; j < BG_GRID_W; j++)
-				{
-					const COLOR cell_colors[]{
-						COLOR {0x0c, 0x0c, 0x0c, 0xff},
-						COLOR {0x10, 0x10, 0x10, 0xff},
-					};
-
-					BG_GRID_PIXELS[i * BG_GRID_W + j] = cell_colors[(i + j) % 2];
-				}
-			}
-			SDL_SetTextureBlendMode(BG_GRID_TEXTURE, SDL_BLENDMODE_NONE);
-			SDL_UpdateTexture(BG_GRID_TEXTURE, nullptr, BG_GRID_PIXELS.get(), BG_GRID_W * sizeof(COLOR));
-		}
-
 		// transparent background grid
 		float bg_w = (ceil(CANVAS_W_ANIM / CELL_W_ANIM) * CELL_W_ANIM);
 		float bg_h = (ceil(CANVAS_H_ANIM / CELL_H_ANIM) * CELL_H_ANIM);
@@ -189,11 +162,11 @@ int main(int, char*[])
 		F_RECT = {CANVAS_X_ANIM, CANVAS_Y_ANIM, CANVAS_W_ANIM, CANVAS_H_ANIM};
 
 		// RENDER THE LAYERS
-		for (uint16_t i = 0; i < LAYERS.size(); i++)
+		for (uint16_t i = 0; i < CURRENT_FRAME_PTR->layers.size(); i++)
 		{
-			const LAYER_INFO& layer = LAYERS[i];
-			SDL_SetTextureBlendMode(layer.texture, (SDL_BlendMode) layer.blendmode);
-			SDL_RenderCopyF(RENDERER, layer.texture, nullptr, &F_RECT);
+			//LAYER_INFO* layer = CURRENT_FRAME_PTR->layers[i];// LAYERS[i];
+			SDL_SetTextureBlendMode(CURRENT_FRAME_PTR->layers[i]->texture, (SDL_BlendMode)CURRENT_FRAME_PTR->layers[i]->blendmode);
+			SDL_RenderCopyF(RENDERER, CURRENT_FRAME_PTR->layers[i]->texture, nullptr, &F_RECT);
 			if (i == CURRENT_LAYER)
 			{
 				if (BRUSH_UPDATE)

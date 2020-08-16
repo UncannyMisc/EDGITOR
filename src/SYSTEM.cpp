@@ -19,10 +19,16 @@
 #include <algorithm>
 #include <filesystem>
 
+// NOTE(manpat): This is not strictly correct but is the best I can do for now.
+// The correct solution would be to use std::filesystem::path everywhere instead of doing path stuff
+// manually, but that's a much larger job than I have time for atm
+char PATH_SEP = static_cast<char>(std::filesystem::path::preferred_separator);
+
 UIBOX_INFO* UIBOX_TOOLS;
 UIBOX_INFO* UIBOX_COLOR;
 UIBOX_INFO* UIBOX_BRUSH;
-UIBOX_INFO* UIBOX_FILES;
+UIBOX_INFO* UIBOX_FILE_EXPLORER;
+UIBOX_INFO* UIBOX_OPEN_FILES;
 UIBOX_INFO* UIBOX_CANVAS;
 
   //
@@ -104,7 +110,7 @@ SDL_Window* INIT_WINDOW()
 
 SDL_Renderer* INIT_RENDERER(SDL_Window* WINDOW)
 {
-	auto RENDERER = SDL_CreateRenderer(WINDOW, -1, SDL_RENDERER_ACCELERATED);
+	RENDERER = SDL_CreateRenderer(WINDOW, -1, SDL_RENDERER_ACCELERATED);
 
 	// BRUSH SURFACE
 	BRUSH_PIXELS = std::make_unique<COLOR[]>(CANVAS_W * CANVAS_H);
@@ -122,7 +128,8 @@ SDL_Renderer* INIT_RENDERER(SDL_Window* WINDOW)
 	CELL_H_ANIM = CELL_H;
 
 	// DEFAULT LAYER
-	layer_new(RENDERER, 0, 0, 255, SDL_BLENDMODE_BLEND);
+	//layer_new(RENDERER, 0, 0, 255, SDL_BLENDMODE_BLEND);
+	file_add(std::filesystem::current_path().string() + PATH_SEP, "untitled.png", CANVAS_W, CANVAS_H);
 
 	// TERMINAL FONT
 	FONT = TTF_OpenFont("resources/FONT.ttf", 16);
@@ -190,7 +197,11 @@ SDL_Renderer* INIT_RENDERER(SDL_Window* WINDOW)
 	// BOXES
 	UIBOX_COLOR = uibox_new(0, 9999, 256, 256, 1, "COLOUR");
 	UIBOX_BRUSH = uibox_new(9999, 9999, 256, 256, 1, "BRUSH");
-	UIBOX_FILES = uibox_new((WINDOW_W / 2) - 320, (WINDOW_H / 2) - 240, 640, 480, 1, "FILES");
+	//UIBOX_FILE_EXPLORER = uibox_new((WINDOW_W / 2) - 320, (WINDOW_H / 2) - 240, 640, 480, 1, "FILE EXPLORER");
+	UIBOX_FILE_EXPLORER = uibox_new(128 + FONT_CHRW, FONT_CHRH * 2, 512, 512 - (FONT_CHRH * 2), 1, "FILE EXPLORER");
+	UIBOX_FILE_EXPLORER->can_scroll = true;
+	UIBOX_OPEN_FILES = uibox_new(128 + FONT_CHRW, 0, 512 - (FONT_CHRW * 2), 512 - (FONT_CHRH * 2), 0, "OPEN FILES");
+	uibox_shrink(UIBOX_OPEN_FILES, 1);
 
 	for (int i = 0; i < BRUSH_W * BRUSH_W; i++)
 	{
@@ -198,7 +209,8 @@ SDL_Renderer* INIT_RENDERER(SDL_Window* WINDOW)
 			"::", "\xb0\xb0", (bool*)&(BRUSH_LIST[BRUSH_LIST_POS]->alpha[i]));
 	}
 
-	uibox_update_files();
+	uibox_update_file_explorer();
+	uibox_update_open_files();
 
 	UIBOX_TOOLS = uibox_new(0, 0, 128, 512, 0, "TOOLS");
 	
@@ -483,12 +495,12 @@ void SYSTEM_INPUT_UPDATE()
 					case SDLK_s: {
 						SDL_Surface* _tsurf = SDL_CreateRGBSurfaceWithFormat(0, CANVAS_W, CANVAS_H, 32, SDL_PIXELFORMAT_RGBA32);
 
-						const LAYER_INFO& layer = LAYERS[0];
+						auto layer = CURRENT_FRAME_PTR->layers[0] ;
 						for (int i = 0; i < CANVAS_W * CANVAS_H; i++)
 						{
-							((COLOR*)_tsurf->pixels)[i] = layer.pixels[i]; // THERE ISN'T MULTI-LAYER BLENDING YET
+							((COLOR*)_tsurf->pixels)[i] = layer->pixels[i]; // THERE ISN'T MULTI-LAYER BLENDING YET
 						}
-						std::string _tpath = (CURRENT_PATH + CURRENT_FILE);
+						std::string _tpath = CURRENT_FILE_PTR->path + CURRENT_FILE_PTR->filename;// (CURRENT_PATH + CURRENT_FILE);
 						IMG_SavePNG(_tsurf, _tpath.c_str());
 						SDL_FreeSurface(_tsurf);
 						break;
@@ -748,7 +760,7 @@ void SYSTEM_LAYER_UPDATE()
 	{
 		UNDO_ENTRY _u { LAYER_UPDATE_REGION, CURRENT_LAYER };
 
-		COLOR* layer_data = (LAYERS[CURRENT_LAYER].pixels.get());
+		auto layer_data = (CURRENT_LAYER_PTR->pixels);
 		for (auto [_x, _y] : LAYER_UPDATE_REGION) {
 			const int _pos = (_y * CANVAS_W + _x);
 			const COLOR brush_color = BRUSH_PIXELS[_pos];
@@ -795,7 +807,7 @@ void SYSTEM_LAYER_UPDATE()
 		push_undo_entry(std::move(_u));
 
 		// update the layer we drew to
-		SDL_UpdateTexture(LAYERS[CURRENT_LAYER].texture, &dirty_rect, &layer_data[dirty_region_start_index], CANVAS_PITCH);
+		SDL_UpdateTexture(CURRENT_LAYER_PTR->texture, &dirty_rect, &layer_data[dirty_region_start_index], CANVAS_PITCH);
 
 		LAYER_UPDATE = 0;
 	}
@@ -823,7 +835,7 @@ void SYSTEM_CANVAS_UPDATE()
 	{
 		auto const canvas_rect = RECT::from_wh(CANVAS_W, CANVAS_H);
 		auto const sdl_rect = UNDO_UPDATE_REGION.clip_to(canvas_rect).to_sdl();
-		auto const layer = &LAYERS[UNDO_UPDATE_LAYER];
+		auto const layer = CURRENT_LAYER_PTR;
 		auto const update_start_index = sdl_rect.y * CANVAS_W + sdl_rect.x;
 		UNDO_UPDATE_REGION = RECT::empty();
 
@@ -832,9 +844,9 @@ void SYSTEM_CANVAS_UPDATE()
 	}
 	else
 	{
-		for (const auto& layer : LAYERS) {
-			SDL_SetTextureBlendMode(layer.texture, SDL_BLENDMODE_NONE);
-			SDL_UpdateTexture(layer.texture, nullptr, &layer.pixels[0], CANVAS_PITCH);
+		for (const auto& layer : CURRENT_FRAME_PTR->layers) {
+			SDL_SetTextureBlendMode(layer->texture, SDL_BLENDMODE_NONE);
+			SDL_UpdateTexture(layer->texture, nullptr, &layer->pixels[0], CANVAS_PITCH);
 		}
 	}
 
@@ -842,5 +854,4 @@ void SYSTEM_CANVAS_UPDATE()
 	CANVAS_UPDATE = false;
 	UNDO_UPDATE_LAYER = 0;
 }
-
 
