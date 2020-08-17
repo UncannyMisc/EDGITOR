@@ -100,7 +100,7 @@ SDL_Window* INIT_WINDOW()
 	SDL_GetWindowSize(WINDOW, &DISPLAY_W, &DISPLAY_H);
 	SDL_SetWindowFullscreen(WINDOW, 0);
 
-	SDL_SetWindowSize(WINDOW, (int)((double)DISPLAY_W * .7777777), (int)((double)DISPLAY_H * .7777777)); // make WINDOW 77.77777% of the display
+	SDL_SetWindowSize(WINDOW, (int)((float)DISPLAY_W * .9), (int)((float)DISPLAY_H * .9)); // make WINDOW 77.77777% of the display
 	SDL_GetWindowSize(WINDOW, &WINDOW_W, &WINDOW_H);
 	WINDOW_X = ((DISPLAY_W / 2) - (WINDOW_W / 2));
 	WINDOW_Y = ((DISPLAY_H / 2) - (WINDOW_H / 2));
@@ -155,7 +155,9 @@ SDL_Renderer* INIT_RENDERER(SDL_Window* WINDOW)
 	const int _t_bs = 13;
 	BRUSH_W = _t_bs;
 	static uint8_t BRUSH_POINTGRID[_t_bs * _t_bs] = {};
-	BRUSH_POINTGRID[0] = 1;
+	
+	BRUSH_POINTGRID[6 * _t_bs + 6] = 1;
+
 	brush_new(BRUSH_POINTGRID, _t_bs);
 	brush_set(BRUSH_LIST_POS);
 
@@ -195,12 +197,14 @@ SDL_Renderer* INIT_RENDERER(SDL_Window* WINDOW)
 	SDL_UpdateTexture(UI_TEXTURE_HUEBAR, nullptr, &UI_PIXELS_HUEBAR[0], sizeof(COLOR) * 16);
 
 	// BOXES
-	UIBOX_COLOR = uibox_new(0, 9999, 256, 256, 1, "COLOUR");
+	UIBOX_COLOR = uibox_new_color(0, 9999, 256, 256, 1, "COLOUR");
 	UIBOX_BRUSH = uibox_new(9999, 9999, 256, 256, 1, "BRUSH");
 	//UIBOX_FILE_EXPLORER = uibox_new((WINDOW_W / 2) - 320, (WINDOW_H / 2) - 240, 640, 480, 1, "FILE EXPLORER");
-	UIBOX_FILE_EXPLORER = uibox_new(128 + FONT_CHRW, FONT_CHRH * 2, 512, 512 - (FONT_CHRH * 2), 1, "FILE EXPLORER");
+	UIBOX_FILE_EXPLORER = uibox_new_file_explorer(640 + FONT_CHRW*2, 0, 512, 512, 0, "FILE EXPLORER");
+	UIBOX_FILE_EXPLORER->snap = 1;
 	UIBOX_FILE_EXPLORER->can_scroll = true;
-	UIBOX_OPEN_FILES = uibox_new(128 + FONT_CHRW, 0, 512 - (FONT_CHRW * 2), 512 - (FONT_CHRH * 2), 0, "OPEN FILES");
+	UIBOX_OPEN_FILES = uibox_new_open_files(128 + FONT_CHRW, 0, 512, 512, 0, "OPEN FILES");
+	UIBOX_OPEN_FILES->snap = 1;
 	uibox_shrink(UIBOX_OPEN_FILES, 1);
 
 	for (int i = 0; i < BRUSH_W * BRUSH_W; i++)
@@ -209,10 +213,8 @@ SDL_Renderer* INIT_RENDERER(SDL_Window* WINDOW)
 			"::", "\xb0\xb0", (bool*)&(BRUSH_LIST[BRUSH_LIST_POS]->alpha[i]));
 	}
 
-	uibox_update_file_explorer();
-	uibox_update_open_files();
-
 	UIBOX_TOOLS = uibox_new(0, 0, 128, 512, 0, "TOOLS");
+	UIBOX_TOOLS->snap = 1;
 	
 	int row = 2;
 
@@ -229,24 +231,24 @@ SDL_Renderer* INIT_RENDERER(SDL_Window* WINDOW)
 
 	uibox_add_element_textbox(UIBOX_TOOLS, 2, row, "MOUSE:");
 	uibox_add_element_textbox(UIBOX_TOOLS, 2, row+1, "X ");
-	uibox_add_element_varbox(UIBOX_TOOLS, 4, row+1, "", (uint16_t*)(&CANVAS_MOUSE_X), 0);
+	uibox_add_element_varbox_s16(UIBOX_TOOLS, 4, row+1, "", &CANVAS_MOUSE_X, 0);
 	uibox_add_element_textbox(UIBOX_TOOLS, 2, row+2, "Y ");
-	uibox_add_element_varbox(UIBOX_TOOLS, 4, row+2, "", (uint16_t*)(&CANVAS_MOUSE_Y), 0);
+	uibox_add_element_varbox_s16(UIBOX_TOOLS, 4, row+2, "", &CANVAS_MOUSE_Y, 0);
 	row += 3;
 
 	uibox_add_element_textbox(UIBOX_TOOLS, 2, row, "CELL X ");
-	uibox_add_element_varbox(UIBOX_TOOLS, 9, row, "", (uint16_t*)(&CANVAS_MOUSE_CELL_X), 0);
+	uibox_add_element_varbox_s16(UIBOX_TOOLS, 9, row, "", &CANVAS_MOUSE_CELL_X, 0);
 	row++;
 
 	uibox_add_element_textbox(UIBOX_TOOLS, 2, row, "CELL Y ");
-	uibox_add_element_varbox(UIBOX_TOOLS, 9, row, "", (uint16_t*)(&CANVAS_MOUSE_CELL_Y), 0);
+	uibox_add_element_varbox_s16(UIBOX_TOOLS, 9, row, "", &CANVAS_MOUSE_CELL_Y, 0);
 	row += 2;
 
 	uibox_add_element_textbox(UIBOX_TOOLS, 2, row, "CANVAS:");
 	uibox_add_element_textbox(UIBOX_TOOLS, 2, row+1, "W ");
-	uibox_add_element_varbox(UIBOX_TOOLS, 4, row+1, "", (uint16_t*)(&CANVAS_W), 0);
+	uibox_add_element_varbox(UIBOX_TOOLS, 4, row+1, "", &CANVAS_W, 0);
 	uibox_add_element_textbox(UIBOX_TOOLS, 2, row+2, "H ");
-	uibox_add_element_varbox(UIBOX_TOOLS, 4, row+2, "", (uint16_t*)(&CANVAS_H), 0);
+	uibox_add_element_varbox(UIBOX_TOOLS, 4, row+2, "", &CANVAS_H, 0);
 	row += 3;
 
 	uibox_add_element_textbox(UIBOX_TOOLS, 2, row, "ZOOM ");
@@ -274,6 +276,11 @@ SDL_Renderer* INIT_RENDERER(SDL_Window* WINDOW)
 		uibox_add_element_button_u8(UIBOX_COLOR, 2 + i, 5, 1, 1, _sp, "\xfe", &(BRUSH_COLOR.g), (uint8_t)std::min(i * 16, 255));
 		uibox_add_element_button_u8(UIBOX_COLOR, 2 + i, 7, 1, 1, _sp, "\xfe", &(BRUSH_COLOR.b), (uint8_t)std::min(i * 16, 255));
 		uibox_add_element_button_u8(UIBOX_COLOR, 2 + i, 9, 1, 1, _sp, "\xfe", &(BRUSH_COLOR.a), (uint8_t)std::min(i * 16, 255));
+	}
+
+	for (int i = 0; i < UIBOXES.size(); i++)
+	{
+		UIBOXES[i]->update_elements();
 	}
 
 	SDL_SetCursor(create_system_cursor());

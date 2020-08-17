@@ -33,7 +33,7 @@ void brush_new(uint8_t* a, uint16_t w)
 {
 	std::unique_ptr<BRUSH_DATA> _u(new BRUSH_DATA(w));
 	
-	for (int _i = 0; _i < 49; _i++)
+	for (int _i = 0; _i < (w * w); _i++)
 	{
 		_u->set(_i, a[_i]);
 	}

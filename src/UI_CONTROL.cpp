@@ -44,6 +44,34 @@ bool ELEMENT_TOGGLE_BOOL = false;
 std::vector<std::unique_ptr<UIBOX_INFO>> UIBOXES;
 std::vector<std::pair<std::string, bool>> PATH_FILES;
 
+void uibox_set_char(UIBOX_INFO* ui, uint16_t char_pos, uint8_t _chr, COLOR _col, COLOR _bg_col, bool update)
+{
+	UIBOX_CHAR* ci = &ui->charinfo[char_pos];
+	if (_chr) ci->chr = _chr; // set _chr to 0 to not update it
+	if (_col != COL_EMPTY) ci->col = _col;
+	if (_bg_col != COL_EMPTY) ci->bg_col = _bg_col;
+	if (!update && !ci->update) return;
+	ci->update = true;
+	ui->update_stack.push(char_pos);// .insert(ui->update_stack.begin() + (rand() % (ui->update_stack.size() + 1)), char_pos);
+	ui->update = true;
+}
+
+void uibox_set_string(UIBOX_INFO* uibox, std::string _charlist, uint16_t x, uint16_t y, COLOR col, bool update)
+{
+	const char* _chars = _charlist.c_str();
+	for (uint16_t j = 0; j < _charlist.size(); j++)
+	{
+		/*if (((j + (y * uibox->chr_w + x)) % uibox->chr_w) > (uibox->chr_w - 4))
+		{
+			uibox_set_char(uibox, j + (y * uibox->chr_w + x)-3, '.', COL_EMPTY, COL_EMPTY, 0);
+			uibox_set_char(uibox, j + (y * uibox->chr_w + x)-2, '.', COL_EMPTY, COL_EMPTY, 0);
+			uibox_set_char(uibox, j + (y * uibox->chr_w + x)-1, '.', COL_EMPTY, COL_EMPTY, 0);
+			break;
+		}*/
+		//if ((j + x) > (uibox->chr_w - 4)) break;
+		uibox_set_char(uibox, j + (y * uibox->chr_w + x), _chars[j], col, COL_EMPTY, update);
+	}
+}
 
 void UPDATE_PATH_FILES()
 {
@@ -131,7 +159,8 @@ void SYSTEM_UIBOX_UPDATE()
 				uibox->creation_update = true;
 				uibox->update = true;
 
-				uibox_update_file_explorer();
+				//uibox_update_file_explorer();
+				uibox->update_elements();
 			}
 		}
 
@@ -382,7 +411,7 @@ void SYSTEM_UIBOX_HANDLE_MOUSE_UP()
 	ELEMENT_CLICKED_IN = -1;
 }
 
-void uibox_update_file_explorer()
+/*void uibox_update_file_explorer()
 {
 	if (!UIBOX_FILE_EXPLORER->scroll_element_list.empty() && !UIBOX_FILE_EXPLORER->element_list.empty())
 	{
@@ -478,64 +507,50 @@ void uibox_update_open_files()
 	{
 		uibox_add_element_textbox(UIBOX_OPEN_FILES, 2, 2 + i, FILES[i]->filename);
 	}
-	//PRINT(FILES.size());
-}
+}*/
 
 UIBOX_INFO* uibox_new(uint16_t _x, uint16_t _y, uint16_t _w, uint16_t _h, bool can_grab, std::string title)
 {
 	auto new_uibox = std::make_unique<UIBOX_INFO>();
 
-	new_uibox->title = title;
-	new_uibox->can_grab = can_grab;
-	new_uibox->update = true;
-	new_uibox->x = _x;
-	new_uibox->y = _y;
-
-	// GET CHARS THAT FIT WINDOW
-	new_uibox->chr_w = (int)floor(((float)_w / (float)FONT_CHRW) + 0.5f);
-	new_uibox->chr_h = (int)floor(((float)_h / (float)FONT_CHRH) + 0.5f);
-	new_uibox->update_stack.reserve(new_uibox->chr_w * new_uibox->chr_h);
-
-	// MAKE WINDOW THE NEW ROUNDED CHAR SIZE
-	new_uibox->w = (new_uibox->chr_w * FONT_CHRW);
-	new_uibox->h = (new_uibox->chr_h * FONT_CHRH);
-
-	new_uibox->construct();
-
-	new_uibox->texture = nullptr;
+	new_uibox->init(_x, _y, _w, _h, can_grab, title);
 
 	UIBOXES.push_back(std::move(new_uibox));
 
 	return UIBOXES.back().get();
 }
 
-void uibox_set_char(UIBOX_INFO* ui, uint16_t char_pos, uint8_t _chr, COLOR _col, COLOR _bg_col, bool update)
+UIBOX_INFO_COLOR* uibox_new_color(uint16_t _x, uint16_t _y, uint16_t _w, uint16_t _h, bool can_grab, std::string title)
 {
-	UIBOX_CHAR* ci = &ui->charinfo[char_pos];
-	if (_chr) ci->chr = _chr; // set _chr to 0 to not update it
-	if (_col!=COL_EMPTY) ci->col = _col;
-	if (_bg_col != COL_EMPTY) ci->bg_col = _bg_col;
-	if (!update && !ci->update) return;
-	ci->update = true;
-	ui->update_stack.push(char_pos);// .insert(ui->update_stack.begin() + (rand() % (ui->update_stack.size() + 1)), char_pos);
-	ui->update = true;
+	auto new_uibox = std::make_unique<UIBOX_INFO_COLOR>();
+
+	new_uibox->init(_x, _y, _w, _h, can_grab, title);
+	auto _tuibox = new_uibox.get();
+	UIBOXES.push_back(std::move(new_uibox));
+
+	return _tuibox;
 }
 
-void uibox_set_string(UIBOX_INFO* uibox, std::string _charlist, uint16_t x, uint16_t y, COLOR col, bool update)
+UIBOX_INFO_FILE_EXPLORER* uibox_new_file_explorer(uint16_t _x, uint16_t _y, uint16_t _w, uint16_t _h, bool can_grab, std::string title)
 {
-	const char* _chars = _charlist.c_str();
-	for (uint16_t j = 0; j < _charlist.size(); j++)
-	{
-		/*if (((j + (y * uibox->chr_w + x)) % uibox->chr_w) > (uibox->chr_w - 4))
-		{
-			uibox_set_char(uibox, j + (y * uibox->chr_w + x)-3, '.', COL_EMPTY, COL_EMPTY, 0);
-			uibox_set_char(uibox, j + (y * uibox->chr_w + x)-2, '.', COL_EMPTY, COL_EMPTY, 0);
-			uibox_set_char(uibox, j + (y * uibox->chr_w + x)-1, '.', COL_EMPTY, COL_EMPTY, 0);
-			break;
-		}*/
-		//if ((j + x) > (uibox->chr_w - 4)) break;
-		uibox_set_char(uibox, j + (y * uibox->chr_w + x), _chars[j], col, COL_EMPTY, update);
-	}
+	auto new_uibox = std::make_unique<UIBOX_INFO_FILE_EXPLORER>();
+
+	new_uibox->init(_x, _y, _w, _h, can_grab, title);
+	auto _tuibox = new_uibox.get();
+	UIBOXES.push_back(std::move(new_uibox));
+
+	return _tuibox;
+}
+
+UIBOX_INFO_OPEN_FILES* uibox_new_open_files(uint16_t _x, uint16_t _y, uint16_t _w, uint16_t _h, bool can_grab, std::string title)
+{
+	auto new_uibox = std::make_unique<UIBOX_INFO_OPEN_FILES>();
+
+	new_uibox->init(_x, _y, _w, _h, can_grab, title);
+	auto _tuibox = new_uibox.get();
+	UIBOXES.push_back(std::move(new_uibox));
+
+	return _tuibox;
 }
 
 inline void uibox_element_setxywh(UIBOX_INFO* uibox, std::shared_ptr<UIBOX_ELEMENT_MAIN> _element, uint16_t x, uint16_t y, int16_t w, int16_t h, std::string text, std::string sel_text)
@@ -571,6 +586,18 @@ void uibox_add_element_varbox(UIBOX_INFO* uibox, uint16_t x, uint16_t y, std::st
 void uibox_add_element_varbox_u8(UIBOX_INFO* uibox, uint16_t x, uint16_t y, std::string text, uint8_t* input_var, uint8_t var)
 {
 	std::shared_ptr<UIBOX_ELEMENT_VARBOX_U8> _element = std::make_shared<UIBOX_ELEMENT_VARBOX_U8>();
+	_element->x = x;
+	_element->y = y;
+	_element->text = text;
+	_element->input_var = input_var;
+	_element->var = var;
+	_element->create(uibox);
+	uibox->element_list.push_back(std::move(_element));
+}
+
+void uibox_add_element_varbox_s16(UIBOX_INFO* uibox, uint16_t x, uint16_t y, std::string text, int16_t* input_var, int16_t var)
+{
+	std::shared_ptr<UIBOX_ELEMENT_VARBOX_S16> _element = std::make_shared<UIBOX_ELEMENT_VARBOX_S16>();
 	_element->x = x;
 	_element->y = y;
 	_element->text = text;

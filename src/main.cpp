@@ -70,6 +70,7 @@ int main(int, char*[])
 		// SET WINDOW X, Y, W, H
 		// CLEAR RENDER TARGET
 		SDL_GetWindowSize(WINDOW, &WINDOW_W, &WINDOW_H);
+		SDL_SetWindowMinimumSize(WINDOW, 1168, 912);
 		SDL_GetWindowPosition(WINDOW, &WINDOW_X, &WINDOW_Y);
 		SDL_SetRenderTarget(RENDERER, nullptr);
 		SDL_SetRenderDrawColor(RENDERER, 0, 0, 0, 255);
@@ -80,6 +81,15 @@ int main(int, char*[])
 		{
 			CANVAS_X = (((float)WINDOW_W * .5f) - ((t_win_w * .5f) - CANVAS_X));
 			CANVAS_Y = (((float)WINDOW_H * .5f) - ((t_win_h * .5f) - CANVAS_Y));
+
+			for (int i = 0; i < UIBOXES.size(); i++)
+			{
+				if (UIBOXES[i]->snap) continue;
+
+				// MOVE UIBOX IN RATIO TO WHERE IT WAS WITH THE NEW WINDOW SIZE
+				UIBOXES[i]->x = (int)floor(((((float)UIBOXES[i]->x + ((float)(UIBOXES[i]->w) / 2)) / (float)t_win_w) * (float)WINDOW_W) - ((float)(UIBOXES[i]->w) / 2));
+				UIBOXES[i]->y = (int)floor(((((float)UIBOXES[i]->y + ((float)(UIBOXES[i]->h) / 2)) / (float)t_win_h) * (float)WINDOW_H) - ((float)(UIBOXES[i]->h) / 2));
+			}
 		}
 
 		if (CANVAS_PREVW != CANVAS_W || CANVAS_PREVH != CANVAS_H)
@@ -129,58 +139,65 @@ int main(int, char*[])
 		// RENDER
 		// smooth lerping animation to make things SLIGHTLY smooth when panning and zooming
 		// the '4.0' can be any number, and will be a changeable option in Settings
-		float anim_speed = 4.0f;
-		CANVAS_X_ANIM = (reach_tween(CANVAS_X_ANIM, floor(CANVAS_X), anim_speed));
-		CANVAS_Y_ANIM = (reach_tween(CANVAS_Y_ANIM, floor(CANVAS_Y), anim_speed));
-		CANVAS_W_ANIM = (reach_tween(CANVAS_W_ANIM, floor((float)CANVAS_W * CANVAS_ZOOM), anim_speed));
-		CANVAS_H_ANIM = (reach_tween(CANVAS_H_ANIM, floor((float)CANVAS_H * CANVAS_ZOOM), anim_speed));
-		CELL_W_ANIM = (reach_tween(CELL_W_ANIM, floor((float)CELL_W * CANVAS_ZOOM), anim_speed));
-		CELL_H_ANIM = (reach_tween(CELL_H_ANIM, floor((float)CELL_H * CANVAS_ZOOM), anim_speed));
-		
-		SDL_FRect F_RECT {};
+		/*  WAS HAVING ISSUES WITH FLOATS AND DRAWING
+		float anim_speed = 2.0f;
+		CANVAS_X_ANIM = (reach_tween(CANVAS_X_ANIM, floorf(CANVAS_X), anim_speed));
+		CANVAS_Y_ANIM = (reach_tween(CANVAS_Y_ANIM, floorf(CANVAS_Y), anim_speed));
+		CANVAS_W_ANIM = (reach_tween(CANVAS_W_ANIM, floorf((float)CANVAS_W * CANVAS_ZOOM), anim_speed));
+		CANVAS_H_ANIM = (reach_tween(CANVAS_H_ANIM, floorf((float)CANVAS_H * CANVAS_ZOOM), anim_speed));
+		CELL_W_ANIM = (reach_tween(CELL_W_ANIM, floorf((float)CELL_W * CANVAS_ZOOM), anim_speed));
+		CELL_H_ANIM = (reach_tween(CELL_H_ANIM, floorf((float)CELL_H * CANVAS_ZOOM), anim_speed));*/
 
+		CANVAS_X_ANIM = floorf(CANVAS_X);
+		CANVAS_Y_ANIM = floorf(CANVAS_Y);
+		CANVAS_W_ANIM = floorf((float)CANVAS_W * CANVAS_ZOOM);
+		CANVAS_H_ANIM = floorf((float)CANVAS_H * CANVAS_ZOOM);
+		CELL_W_ANIM = floorf((float)CELL_W * CANVAS_ZOOM);
+		CELL_H_ANIM = floorf((float)CELL_H * CANVAS_ZOOM);
+		
+		SDL_Rect _trect{};
 		// transparent background grid
-		float bg_w = (ceil(CANVAS_W_ANIM / CELL_W_ANIM) * CELL_W_ANIM);
-		float bg_h = (ceil(CANVAS_H_ANIM / CELL_H_ANIM) * CELL_H_ANIM);
-		F_RECT = SDL_FRect {CANVAS_X_ANIM, CANVAS_Y_ANIM, bg_w, bg_h};
+		float bg_w = floorf(ceilf(CANVAS_W_ANIM / CELL_W_ANIM) * CELL_W_ANIM);
+		float bg_h = floorf(ceilf(CANVAS_H_ANIM / CELL_H_ANIM) * CELL_H_ANIM);
+		_trect = { (int)CANVAS_X_ANIM, (int)CANVAS_Y_ANIM, (int)bg_w, (int)bg_h};
 		SDL_SetTextureBlendMode(BG_GRID_TEXTURE, SDL_BLENDMODE_NONE);
-		SDL_RenderCopyF(RENDERER, BG_GRID_TEXTURE, nullptr, &F_RECT);
+		SDL_RenderCopy(RENDERER, BG_GRID_TEXTURE, nullptr, &_trect);
 
 		// these 2 rects cover the overhang the background grid has beyond the canvas
 		SDL_SetRenderDrawColor(RENDERER, 0, 0, 0, 255);
-		F_RECT = SDL_FRect {
-			std::max(0.0f, CANVAS_X_ANIM), std::max(0.0f,CANVAS_Y_ANIM + (CANVAS_H_ANIM)),
-			std::min(float(WINDOW_W),bg_w), CELL_H * CANVAS_ZOOM
+		_trect = {
+			(int)(std::max(0.0f, CANVAS_X_ANIM)), (int)(std::max(0.0f,CANVAS_Y_ANIM + (CANVAS_H_ANIM))),
+			(int)(std::min(float(WINDOW_W),bg_w)), (int)(CELL_H * CANVAS_ZOOM)
 		};
-		SDL_RenderFillRectF(RENDERER, &F_RECT);
-		F_RECT = SDL_FRect {
-			std::max(0.0f, CANVAS_X_ANIM + (CANVAS_W_ANIM)), std::max(0.0f, CANVAS_Y_ANIM),
-			CELL_W * CANVAS_ZOOM, std::min(float(WINDOW_H),bg_h)
+		SDL_RenderFillRect(RENDERER, &_trect);
+		_trect = {
+			(int)(std::max(0.0f, CANVAS_X_ANIM + (CANVAS_W_ANIM))), (int)(std::max(0.0f, CANVAS_Y_ANIM)),
+			(int)(CELL_W * CANVAS_ZOOM), (int)(std::min(float(WINDOW_H) , bg_h))
 		};
-		SDL_RenderFillRectF(RENDERER, &F_RECT);
+		SDL_RenderFillRect(RENDERER, &_trect);
 		
-		F_RECT = {CANVAS_X_ANIM, CANVAS_Y_ANIM, CANVAS_W_ANIM, CANVAS_H_ANIM};
+		_trect = {(int)CANVAS_X_ANIM, (int)CANVAS_Y_ANIM, (int)CANVAS_W_ANIM, (int)CANVAS_H_ANIM};
 
 		// RENDER THE LAYERS
 		for (uint16_t i = 0; i < CURRENT_FRAME_PTR->layers.size(); i++)
 		{
 			//LAYER_INFO* layer = CURRENT_FRAME_PTR->layers[i];// LAYERS[i];
 			SDL_SetTextureBlendMode(CURRENT_FRAME_PTR->layers[i]->texture, (SDL_BlendMode)CURRENT_FRAME_PTR->layers[i]->blendmode);
-			SDL_RenderCopyF(RENDERER, CURRENT_FRAME_PTR->layers[i]->texture, nullptr, &F_RECT);
+			SDL_RenderCopy(RENDERER, CURRENT_FRAME_PTR->layers[i]->texture, nullptr, &_trect);
 			if (i == CURRENT_LAYER)
 			{
 				if (BRUSH_UPDATE)
 				{
 					SDL_SetTextureBlendMode(BRUSH_TEXTURE, SDL_BLENDMODE_BLEND);
-					SDL_RenderCopyF(RENDERER, BRUSH_TEXTURE, nullptr, &F_RECT);
+					SDL_RenderCopy(RENDERER, BRUSH_TEXTURE, nullptr, &_trect);
 				}
 			}
 		}
 
 		// the grey box around the canvas
 		SDL_SetRenderDrawColor(RENDERER, 64, 64, 64, 255);
-		F_RECT = { CANVAS_X_ANIM - 2.0f, CANVAS_Y_ANIM - 2.0f, CANVAS_W_ANIM + 4.0f, CANVAS_H_ANIM + 4.0f };
-		SDL_RenderDrawRectF(RENDERER, &F_RECT);
+		_trect = { (int)(CANVAS_X_ANIM - 2.0f), (int)(CANVAS_Y_ANIM - 2.0f), (int)(CANVAS_W_ANIM + 4.0f), (int)(CANVAS_H_ANIM + 4.0f) };
+		SDL_RenderDrawRect(RENDERER, &_trect);
 
 		SYSTEM_UIBOX_UPDATE();
 
