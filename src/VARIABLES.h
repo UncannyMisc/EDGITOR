@@ -112,12 +112,32 @@ const uint8_t CHAR_BOXH = 0xcd;//u8"═";
 const uint8_t CHAR_BOXV = 0xba;//u8"║";
 #define STR_BOXV "\xba"
 
-const uint8_t CHAR_LINEV = 0xb3;// │
-#define STR_LINEV "\xb3"
-const uint8_t CHAR_LINEVR = 0xc3;// ├
-#define STR_LINEVR "\xc3"
+const uint8_t CHAR_LINETL = 0xda;// ┌
+#define STR_LINETL "\xda"
+const uint8_t CHAR_LINETR = 0xbf; // ┐
+#define STR_LINETR "\xbf"
 const uint8_t CHAR_LINEBL = 0xc0;// └
 #define STR_LINEBL "\xc0"
+const uint8_t CHAR_LINEBR = 0xd9;// ┘
+#define STR_LINEBR "\xd9"
+const uint8_t CHAR_LINEH = 0xc4;// ─
+#define STR_LINEH "\xc4"
+const uint8_t CHAR_LINEV = 0xb3;// │
+#define STR_LINEV "\xb3"
+
+const uint8_t CHAR_LINEVL = 0xb4;// ┤
+#define STR_LINEVL "\xb4"
+const uint8_t CHAR_LINEVR = 0xc3;// ├
+#define STR_LINEVR "\xc3"
+const uint8_t CHAR_LINEHU = 0xc1;// ┴
+#define STR_LINEHL "\xc1"
+const uint8_t CHAR_LINEHD = 0xc2;// ┬
+#define STR_LINEHR "\xc2"
+
+const uint8_t CHAR_LINEVL2 = 0xb5;// ╡
+#define STR_LINEVL2 "\xb5"
+const uint8_t CHAR_LINEVR2 = 0xc6;// ╞
+#define STR_LINEVR2 "\xc6"
 
 const uint8_t CHAR_ARWU = 0x18;
 #define STR_ARWU "\x18"

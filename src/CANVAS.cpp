@@ -101,17 +101,23 @@ void set_pixel(const int16_t x, const int16_t y, const COLOR c)
 
 void set_pixel_brush(int x, int y, COLOR c)
 {
-	for (int i = 0; i < BRUSH_W; i++)
+	int _tx = x, _ty = y;
+	for (uint16_t s = 0; s < BRUSH_SCATTER_N; s++)
 	{
-		for (int j = 0; j < BRUSH_W; j++)
+		if (BRUSH_SCATTER_X) _tx = x + (heptrand() % BRUSH_SCATTER_X) - (BRUSH_SCATTER_X / 2);
+		if (BRUSH_SCATTER_Y) _ty = y + (heptrand() % BRUSH_SCATTER_Y) - (BRUSH_SCATTER_Y / 2);
+		for (int i = 0; i < BRUSH_W; i++)
 		{
-			int16_t _tx = ((x + BRUSH_X) + i);
-			int16_t _ty = ((y + BRUSH_Y) + j);
-			//if (!in_canvas(_tx, _ty)) continue;
-			uint8_t _a = (BRUSH_LIST[BRUSH_LIST_POS]->alpha[j * BRUSH_W + i]);
-			if (!_a) continue;
-			//if (BRUSH_PIXELS[_tx, _ty] != 0x00000000) continue;
-			if (_a) set_pixel(_tx, _ty, c);
+			for (int j = 0; j < BRUSH_W; j++)
+			{
+				//_tx = ((_tx + BRUSH_X) + i);
+				//_ty = ((_ty + BRUSH_Y) + j);
+				//if (!in_canvas(_tx, _ty)) continue;
+				uint8_t _a = (BRUSH_LIST[BRUSH_LIST_POS]->alpha[j * BRUSH_W + i]);
+				if (!_a) continue;
+				//if (BRUSH_PIXELS[_tx, _ty] != 0x00000000) continue;
+				if (_a) set_pixel(((_tx + BRUSH_X) + i), ((_ty + BRUSH_Y) + j), c);
+			}
 		}
 	}
 }

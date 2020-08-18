@@ -96,7 +96,11 @@ void UPDATE_PATH_FILES()
 				_folders += 1;
 			}
 			else
-				PATH_FILES.push_back(std::pair{ _name,0 });
+			{
+				std::string _tstr = _name.substr(_name.size() - 3, 3);
+				if (_tstr == "png" || _tstr == "PNG") PATH_FILES.push_back(std::pair{ _name,0 });
+			}
+				//PATH_FILES.push_back(std::pair{ _name,0 });
 		}
 	}
 }
@@ -262,7 +266,7 @@ void SYSTEM_UIBOX_UPDATE()
 				uibox->texture = SDL_CreateTexture(RENDERER, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_TARGET, uibox->chr_w * FONT_CHRW, uibox->chr_h * FONT_CHRH);
 			}
 
-			SDL_SetTextureBlendMode(uibox->texture, SDL_BLENDMODE_BLEND);
+			SDL_SetTextureBlendMode(uibox->texture, SDL_BLENDMODE_NONE); // is *_BLEND needed? maybe not.
 			SDL_SetTextureBlendMode(FONTMAP, SDL_BLENDMODE_BLEND);
 			SDL_SetRenderTarget(RENDERER, uibox->texture);
 			SDL_SetRenderDrawColor(RENDERER, 255, 255, 255, 255);
@@ -306,6 +310,11 @@ void SYSTEM_UIBOX_UPDATE()
 			//} while (uibox->creation_update); // only happens the moment a window is created
 
 			SDL_SetRenderTarget(RENDERER, nullptr);
+
+			if (uibox->has_drawloop)
+			{
+				uibox->drawloop();
+			}
 		}
 
 		if (uibox->shrink)
@@ -524,6 +533,7 @@ UIBOX_INFO_COLOR* uibox_new_color(uint16_t _x, uint16_t _y, uint16_t _w, uint16_
 {
 	auto new_uibox = std::make_unique<UIBOX_INFO_COLOR>();
 
+	new_uibox->has_drawloop = 1;
 	new_uibox->init(_x, _y, _w, _h, can_grab, title);
 	auto _tuibox = new_uibox.get();
 	UIBOXES.push_back(std::move(new_uibox));
@@ -545,6 +555,17 @@ UIBOX_INFO_FILE_EXPLORER* uibox_new_file_explorer(uint16_t _x, uint16_t _y, uint
 UIBOX_INFO_OPEN_FILES* uibox_new_open_files(uint16_t _x, uint16_t _y, uint16_t _w, uint16_t _h, bool can_grab, std::string title)
 {
 	auto new_uibox = std::make_unique<UIBOX_INFO_OPEN_FILES>();
+
+	new_uibox->init(_x, _y, _w, _h, can_grab, title);
+	auto _tuibox = new_uibox.get();
+	UIBOXES.push_back(std::move(new_uibox));
+
+	return _tuibox;
+}
+
+UIBOX_INFO_FRAMES_LAYERS* uibox_new_frames_layers(uint16_t _x, uint16_t _y, uint16_t _w, uint16_t _h, bool can_grab, std::string title)
+{
+	auto new_uibox = std::make_unique<UIBOX_INFO_FRAMES_LAYERS>();
 
 	new_uibox->init(_x, _y, _w, _h, can_grab, title);
 	auto _tuibox = new_uibox.get();
@@ -635,6 +656,19 @@ void uibox_add_element_button(UIBOX_INFO* uibox, uint16_t x, uint16_t y, int16_t
 void uibox_add_element_button_u8(UIBOX_INFO* uibox, uint16_t x, uint16_t y, int16_t w, int16_t h, std::string text, std::string sel_text, uint8_t* input_var, uint8_t button_var)
 {
 	std::shared_ptr<UIBOX_ELEMENT_BUTTON_U8> _element = std::make_shared<UIBOX_ELEMENT_BUTTON_U8>();
+	uibox_element_setxywh(uibox, _element, x, y, w, h, text, sel_text);
+
+	_element->text = text;
+	_element->sel_text = sel_text;
+	_element->input_var = input_var;
+	_element->button_var = button_var;
+	_element->create(uibox);
+	uibox->element_list.push_back(std::move(_element));
+}
+
+void uibox_add_element_button_color(UIBOX_INFO* uibox, uint16_t x, uint16_t y, int16_t w, int16_t h, std::string text, std::string sel_text, uint8_t* input_var, uint8_t button_var)
+{
+	std::shared_ptr<UIBOX_ELEMENT_BUTTON_COLOR> _element = std::make_shared<UIBOX_ELEMENT_BUTTON_COLOR>();
 	uibox_element_setxywh(uibox, _element, x, y, w, h, text, sel_text);
 
 	_element->text = text;

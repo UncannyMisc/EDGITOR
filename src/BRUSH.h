@@ -45,6 +45,9 @@ extern COLOR BRUSH_COLOR;
 extern COLOR UNDO_COLOR;
 extern COLOR* BRUSH_CURSOR_PIXELS;
 extern COLOR* BRUSH_CURSOR_PIXELS_CLEAR;
+extern uint16_t BRUSH_SCATTER_X;
+extern uint16_t BRUSH_SCATTER_Y;
+extern uint16_t BRUSH_SCATTER_N;
 
 
 extern std::vector<std::unique_ptr<BRUSH_DATA>> BRUSH_LIST;

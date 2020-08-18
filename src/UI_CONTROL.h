@@ -33,6 +33,8 @@ extern int16_t ELEMENT_IN;
 extern int16_t ELEMENT_CLICKED_IN;
 extern bool ELEMENT_TOGGLE_BOOL;
 
+struct UIBOX_INFO;
+
 extern std::vector<std::unique_ptr<UIBOX_INFO>> UIBOXES;
 extern std::vector<std::pair<std::string, bool>> PATH_FILES;
 
@@ -80,7 +82,7 @@ struct UIBOX_INFO {
 	std::vector<std::shared_ptr<UIBOX_ELEMENT_MAIN>> element_list;
 
 	faststack<uint16_t> update_stack;
-	std::string title;
+	std::string title = "";
 	SDL_Texture* texture;
 	uint16_t tex_w;
 	uint16_t tex_h;
@@ -99,28 +101,7 @@ struct UIBOX_INFO {
 	uint16_t scroll_element_list_size = 0;
 
 	bool snap = 0;
-
-	virtual void init(uint16_t _x, uint16_t _y, uint16_t _w, uint16_t _h, bool can_grab, std::string title)
-	{
-		this->title = title;
-		this->can_grab = can_grab;
-		this->update = true;
-		this->x = _x;
-		this->y = _y;
-
-		// GET CHARS THAT FIT WINDOW
-		this->chr_w = (int)floor(((float)_w / (float)FONT_CHRW) + 0.5f);
-		this->chr_h = (int)floor(((float)_h / (float)FONT_CHRH) + 0.5f);
-		this->update_stack.reserve(this->chr_w * this->chr_h);
-
-		// MAKE WINDOW THE NEW ROUNDED CHAR SIZE
-		this->w = (this->chr_w * FONT_CHRW);
-		this->h = (this->chr_h * FONT_CHRH);
-
-		this->construct();
-
-		this->texture = nullptr;
-	}
+	bool has_drawloop = 0;
 
 	virtual void construct()
 	{
@@ -162,7 +143,32 @@ struct UIBOX_INFO {
 		uibox_set_string(this, STR_NBSP STR_ARWD STR_NBSP, this->chr_w - 4, 0, COL_WHITE, false);
 	}
 
+	virtual void init(uint16_t _x, uint16_t _y, uint16_t _w, uint16_t _h, bool can_grab, std::string title)
+	{
+		this->title = title;
+		this->can_grab = can_grab;
+		this->update = true;
+		this->x = _x;
+		this->y = _y;
+
+		// GET CHARS THAT FIT WINDOW
+		this->chr_w = (int)floor(((float)_w / (float)FONT_CHRW) + 0.5f);
+		this->chr_h = (int)floor(((float)_h / (float)FONT_CHRH) + 0.5f);
+		this->update_stack.reserve(this->chr_w * this->chr_h);
+
+		// MAKE WINDOW THE NEW ROUNDED CHAR SIZE
+		this->w = (this->chr_w * FONT_CHRW);
+		this->h = (this->chr_h * FONT_CHRH);
+
+		this->construct();
+	}
+
 	virtual void update_elements(void)
+	{
+		//
+	}
+
+	virtual void drawloop()
 	{
 		//
 	}
@@ -228,6 +234,7 @@ void uibox_add_element_varbox_s16(UIBOX_INFO* uibox, uint16_t x, uint16_t y, std
 void uibox_add_element_varbox_f(UIBOX_INFO* uibox, uint16_t x, uint16_t y, std::string text, float* input_var, float var);
 void uibox_add_element_button(UIBOX_INFO* uibox, uint16_t x, uint16_t y, int16_t w, int16_t h, std::string text, std::string sel_text, uint16_t* input_var, uint16_t button_var);
 void uibox_add_element_button_u8(UIBOX_INFO* uibox, uint16_t x, uint16_t y, int16_t w, int16_t h, std::string text, std::string sel_text, uint8_t* input_var, uint8_t button_var);
+void uibox_add_element_button_color(UIBOX_INFO* uibox, uint16_t x, uint16_t y, int16_t w, int16_t h, std::string text, std::string sel_text, uint8_t* input_var, uint8_t button_var);
 void uibox_add_element_button_string(UIBOX_INFO* uibox, uint16_t x, uint16_t y, int16_t w, int16_t h, std::string text, std::string sel_text, std::string* input_var, std::string button_var);
 void uibox_add_element_button_files_goto(UIBOX_INFO* uibox, uint16_t x, uint16_t y, int16_t w, int16_t h, std::string text, std::string* input_var, std::string button_var);
 void uibox_add_element_button_files_load(UIBOX_INFO* uibox, uint16_t x, uint16_t y, int16_t w, int16_t h, std::string text, std::string path, std::string file);
@@ -239,9 +246,182 @@ void uibox_add_element_numinput(UIBOX_INFO* uibox, uint16_t x, uint16_t y, std::
 void uibox_update_element(int16_t uibox_in, int16_t element_in);
 
 struct UIBOX_INFO_COLOR : public UIBOX_INFO {
+	uint8_t r1 = 0x00;
+	uint8_t r2 = 0x00;
+	uint8_t g1 = 0x00;
+	uint8_t g2 = 0x00;
+	uint8_t b1 = 0x00;
+	uint8_t b2 = 0x00;
+	uint8_t a1 = 0x00;
+	uint8_t a2 = 0x00;
+
+	uint8_t tr1 = 0x00;
+	uint8_t tr2 = 0x00;
+	uint8_t tg1 = 0x00;
+	uint8_t tg2 = 0x00;
+	uint8_t tb1 = 0x00;
+	uint8_t tb2 = 0x00;
+	uint8_t ta1 = 0x00;
+	uint8_t ta2 = 0x00;
+	uint16_t _ti = 1;
+
+	bool _init = 1;
+	bool _tb = 0;
+
+	bool color_update = 0;
+
+	bool _test = 1;
+	
 	void update_elements() override
 	{
-		//
+		//this->element_list.clear();
+		if (this->_init)
+		{
+			uibox_add_element_textbox(this, 2, 2, "R:");
+			uibox_add_element_varbox_u8(this, 5, 2, "", &(BRUSH_COLOR.r), 0);
+
+			uibox_add_element_textbox(this, 2, 6, "G:");
+			uibox_add_element_varbox_u8(this, 5, 6, "", &(BRUSH_COLOR.g), 0);
+
+			uibox_add_element_textbox(this, 2, 10, "B:");
+			uibox_add_element_varbox_u8(this, 5, 10, "", &(BRUSH_COLOR.b), 0);
+
+			uibox_add_element_textbox(this, 2, 14, "A:");
+			uibox_add_element_varbox_u8(this, 5, 14, "", &(BRUSH_COLOR.a), 0);
+
+			std::string _sp = "";
+			for (int i = 0; i < 16; i++)
+			{
+				//if (i == 1 || i == 15 || i == 8) _sp = "+"; else _sp = "-";
+				switch (i)
+				{
+				case 0:
+					_sp = "0";
+					break;
+
+				case 1:
+					_sp = "1";
+					break;
+
+				case 2:
+					_sp = "2";
+					break;
+
+				case 3:
+					_sp = "3";
+					break;
+
+				case 4:
+					_sp = "4";
+					break;
+
+				case 5:
+					_sp = "5";
+					break;
+
+				case 6:
+					_sp = "6";
+					break;
+
+				case 7:
+					_sp = "7";
+					break;
+
+				case 8:
+					_sp = "8";
+					break;
+
+				case 9:
+					_sp = "9";
+					break;
+
+				case 10:
+					_sp = "A";
+					break;
+
+				case 11:
+					_sp = "B";
+					break;
+
+				case 12:
+					_sp = "C";
+					break;
+
+				case 13:
+					_sp = "D";
+					break;
+
+				case 14:
+					_sp = "E";
+					break;
+
+				case 15:
+					_sp = "F";
+					break;
+				}
+				uibox_add_element_button_color(this, 2 + i, 3, 1, 1, _sp, _sp, &(this->r1), (uint8_t)(i * 17));
+				uibox_add_element_button_color(this, 2 + i, 4, 1, 1, _sp, _sp, &(this->r2), (uint8_t)(i * 17));
+				uibox_add_element_button_color(this, 2 + i, 7, 1, 1, _sp, _sp, &(this->g1), (uint8_t)(i * 17));
+				uibox_add_element_button_color(this, 2 + i, 8, 1, 1, _sp, _sp, &(this->g2), (uint8_t)(i * 17));
+				uibox_add_element_button_color(this, 2 + i, 11, 1, 1, _sp, _sp, &(this->b1), (uint8_t)(i * 17));
+				uibox_add_element_button_color(this, 2 + i, 12, 1, 1, _sp, _sp, &(this->b2), (uint8_t)(i * 17));
+				uibox_add_element_button_color(this, 2 + i, 15, 1, 1, _sp, _sp, &(this->a1), (uint8_t)(i * 17));
+				uibox_add_element_button_color(this, 2 + i, 16, 1, 1, _sp, _sp, &(this->a2), (uint8_t)(i * 17));
+			}
+
+			r1 = (uint8_t)(HI_NIBBLE(BRUSH_COLOR.r) | (HI_NIBBLE(BRUSH_COLOR.r) >> 4));
+			r2 = (uint8_t)(LO_NIBBLE(BRUSH_COLOR.r) | (LO_NIBBLE(BRUSH_COLOR.r) << 4));
+			g1 = (uint8_t)(HI_NIBBLE(BRUSH_COLOR.g) | (HI_NIBBLE(BRUSH_COLOR.g) >> 4));
+			g2 = (uint8_t)(LO_NIBBLE(BRUSH_COLOR.g) | (LO_NIBBLE(BRUSH_COLOR.g) << 4));
+			b1 = (uint8_t)(HI_NIBBLE(BRUSH_COLOR.b) | (HI_NIBBLE(BRUSH_COLOR.b) >> 4));
+			b2 = (uint8_t)(LO_NIBBLE(BRUSH_COLOR.b) | (LO_NIBBLE(BRUSH_COLOR.b) << 4));
+			a1 = (uint8_t)(HI_NIBBLE(BRUSH_COLOR.a) | (HI_NIBBLE(BRUSH_COLOR.a) >> 4));
+			a2 = (uint8_t)(LO_NIBBLE(BRUSH_COLOR.a) | (LO_NIBBLE(BRUSH_COLOR.a) << 4));
+
+			this->_init = 0;
+		}
+		
+		if (
+			tr1 != r1 ||
+			tr2 != r2 ||
+			tg1 != g1 ||
+			tg2 != g2 ||
+			tb1 != b1 ||
+			tb2 != b2 ||
+			ta1 != a1 ||
+			ta2 != a2
+			)
+		{
+			BRUSH_COLOR = COLOR{ (uint8_t)(HI_NIBBLE(r1) | LO_NIBBLE(r2)),(uint8_t)(HI_NIBBLE(g1) | LO_NIBBLE(g2)),(uint8_t)(HI_NIBBLE(b1) | LO_NIBBLE(b2)),(uint8_t)(HI_NIBBLE(a1) | LO_NIBBLE(a2)) };
+
+			tr1 = r1;
+			tr2 = r2;
+			tg1 = g1;
+			tg2 = g2;
+			tb1 = b1;
+			tb2 = b2;
+			ta1 = a1;
+			ta2 = a2;
+		}
+	}
+
+	void drawloop() override
+	{
+		SDL_SetRenderTarget(RENDERER, texture);
+		SDL_SetRenderDrawBlendMode(RENDERER, SDL_BLENDMODE_NONE);
+
+		SDL_Rect _trect = { this->w - (FONT_CHRW * 11) ,FONT_CHRH * 2,(FONT_CHRW * 8),(FONT_CHRH * 4) };
+		SDL_SetRenderDrawColor(RENDERER, 0,0,0,255);
+		SDL_RenderFillRect(RENDERER, &_trect);
+		SDL_SetRenderDrawColor(RENDERER, 255, 255, 255, 255);
+		SDL_RenderDrawRect(RENDERER, &_trect);
+		SDL_RenderDrawLine(RENDERER, _trect.x, _trect.y, _trect.x + _trect.w - 1, _trect.y + _trect.h - 1);
+		SDL_SetRenderDrawColor(RENDERER, BRUSH_COLOR.r, BRUSH_COLOR.g, BRUSH_COLOR.b, BRUSH_COLOR.a);
+		SDL_SetRenderDrawBlendMode(RENDERER, SDL_BLENDMODE_BLEND);
+		SDL_RenderFillRect(RENDERER, &_trect);
+		SDL_SetRenderDrawBlendMode(RENDERER, SDL_BLENDMODE_NONE);
+
+		SDL_SetRenderTarget(RENDERER, NULL);
 	}
 };
 
@@ -347,10 +527,43 @@ struct UIBOX_INFO_OPEN_FILES : public UIBOX_INFO {
 	}
 };
 
+struct UIBOX_INFO_FRAMES_LAYERS : public UIBOX_INFO {
+	void update_elements() override
+	{
+		this->element_update = 1;
+		this->update = 1;
+
+		int _tx, _ty;
+		std::string _tchar;
+		for (int el = 0; el < this->element_list.size(); el++)
+		{
+			_tx = this->element_list[el]->x;
+			_ty = this->element_list[el]->y;
+			_tchar = this->element_list[el]->text;
+			for (uint16_t sj = 0; sj < _tchar.size(); sj++)
+			{
+				if (((sj + (_ty * this->chr_w + _tx)) % this->chr_w) > (this->chr_w - 4)) break;
+				uibox_set_char(this, sj + (_ty * this->chr_w + _tx), 32, COL_EMPTY, COL_BGUPDATE, 1);
+			}
+		}
+
+		this->element_list.clear();
+
+		for (int f = 0; f < CURRENT_FILE_PTR->frames.size(); f++)
+		{
+			for (int l= 0; l < CURRENT_FILE_PTR->frames[f]->layers.size(); l++)
+			{
+				uibox_add_element_textbox(this, 2 + (f*2), 2 + l, (CURRENT_FRAME == f) ? ((CURRENT_LAYER == l) ? "\x08" : "\x09") : "\x07");
+			}
+		}
+	}
+};
+
 UIBOX_INFO* uibox_new(uint16_t _x, uint16_t _y, uint16_t _w, uint16_t _h, bool can_grab, std::string title);
 UIBOX_INFO_COLOR* uibox_new_color(uint16_t _x, uint16_t _y, uint16_t _w, uint16_t _h, bool can_grab, std::string title);
 UIBOX_INFO_FILE_EXPLORER* uibox_new_file_explorer(uint16_t _x, uint16_t _y, uint16_t _w, uint16_t _h, bool can_grab, std::string title);
 UIBOX_INFO_OPEN_FILES* uibox_new_open_files(uint16_t _x, uint16_t _y, uint16_t _w, uint16_t _h, bool can_grab, std::string title);
+UIBOX_INFO_FRAMES_LAYERS* uibox_new_frames_layers(uint16_t _x, uint16_t _y, uint16_t _w, uint16_t _h, bool can_grab, std::string title);
 
 /*
 	Finds UIBOX though the title
@@ -442,12 +655,12 @@ struct UIBOX_ELEMENT_VARBOX : public UIBOX_ELEMENT_MAIN {
 				1);
 		}
 	}
-	bool is_sel() override
+	/*bool is_sel() override
 	{
-		bool _c = *input_var != var;
-		if (_c) var = *input_var;
-		return _c;
-	}
+		//bool _c = *input_var != var;
+		//if (_c) var = *input_var;
+		//return _c;
+	}*/
 };
 
 struct UIBOX_ELEMENT_VARBOX_U8 : public UIBOX_ELEMENT_MAIN {
@@ -569,6 +782,25 @@ struct UIBOX_ELEMENT_BUTTON_U8 : public UIBOX_ELEMENT_MAIN {
 	};
 	void set() override
 	{
+		*input_var = button_var;
+	}
+	bool is_sel() override
+	{
+		return *input_var == button_var;
+	}
+};
+
+struct UIBOX_ELEMENT_BUTTON_COLOR : public UIBOX_ELEMENT_MAIN {
+	uint8_t* input_var = nullptr;
+	uint8_t button_var = 0;
+
+	void create(UIBOX_INFO* uibox) override
+	{
+		uibox_set_string(uibox, text, x, y, COL_WHITE, uibox->element_update);
+	};
+	void set() override
+	{
+		UIBOX_COLOR->update_elements();
 		*input_var = button_var;
 	}
 	bool is_sel() override

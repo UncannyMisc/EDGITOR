@@ -18,6 +18,7 @@
 
 #include <algorithm>
 #include <filesystem>
+#include <chrono>
 
 // NOTE(manpat): This is not strictly correct but is the best I can do for now.
 // The correct solution would be to use std::filesystem::path everywhere instead of doing path stuff
@@ -30,6 +31,7 @@ UIBOX_INFO* UIBOX_BRUSH;
 UIBOX_INFO* UIBOX_FILE_EXPLORER;
 UIBOX_INFO* UIBOX_OPEN_FILES;
 UIBOX_INFO* UIBOX_CANVAS;
+UIBOX_INFO* UIBOX_FRAMES_LAYERS;
 
   //
  //   INITIALISATION   ///////////////////////////////////////////////// ///////  //////   /////    ////     ///      //       /
@@ -49,6 +51,20 @@ void PRINT(int print)
 {
 	std::cout << print << std::endl;
 }
+
+uint16_t heptrand_seed = (uint16_t)rand();
+
+uint16_t heptrand() {
+	heptrand_seed = (0x7777 * heptrand_seed ^ 0x7777);
+	return (heptrand_seed >> 0x0007) & 0x7777;
+}
+
+uint16_t heptrand(uint16_t seed) {
+	heptrand_seed = seed;
+	heptrand_seed = (0x7777 * heptrand_seed ^ 0x7777);
+	return (heptrand_seed >> 0x0007) & 0x7777;
+}
+
 
 bool INIT_SDL()
 {
@@ -197,20 +213,56 @@ SDL_Renderer* INIT_RENDERER(SDL_Window* WINDOW)
 	SDL_UpdateTexture(UI_TEXTURE_HUEBAR, nullptr, &UI_PIXELS_HUEBAR[0], sizeof(COLOR) * 16);
 
 	// BOXES
-	UIBOX_COLOR = uibox_new_color(0, 9999, 256, 256, 1, "COLOUR");
-	UIBOX_BRUSH = uibox_new(9999, 9999, 256, 256, 1, "BRUSH");
+	UIBOX_COLOR = uibox_new_color(0, 9999, 272, 400, 1, "COLOUR");
+	UIBOX_BRUSH = uibox_new(9999, 9999, 272, 400, 1, "BRUSH");
 	//UIBOX_FILE_EXPLORER = uibox_new((WINDOW_W / 2) - 320, (WINDOW_H / 2) - 240, 640, 480, 1, "FILE EXPLORER");
 	UIBOX_FILE_EXPLORER = uibox_new_file_explorer(640 + FONT_CHRW*2, 0, 512, 512, 0, "FILE EXPLORER");
 	UIBOX_FILE_EXPLORER->snap = 1;
 	UIBOX_FILE_EXPLORER->can_scroll = true;
+	uibox_shrink(UIBOX_FILE_EXPLORER, 1);
 	UIBOX_OPEN_FILES = uibox_new_open_files(128 + FONT_CHRW, 0, 512, 512, 0, "OPEN FILES");
 	UIBOX_OPEN_FILES->snap = 1;
 	uibox_shrink(UIBOX_OPEN_FILES, 1);
 
+	//UIBOX_FRAMES_LAYERS;// = uibox_new((WINDOW_W / 2) - 256, 9999, 512, 256, 1, "FRAMES & LAYERS");
+	UIBOX_FRAMES_LAYERS = uibox_new_frames_layers((WINDOW_W / 2) - 304, 9999, 608, 256, 1, "FRAMES & LAYERS");
+
 	for (int i = 0; i < BRUSH_W * BRUSH_W; i++)
 	{
-		uibox_add_element_toggle(UIBOX_BRUSH, 2 + ((i % BRUSH_W) * 2), 1 + (i / BRUSH_W), 2, 1,
-			"::", "\xb0\xb0", (bool*)&(BRUSH_LIST[BRUSH_LIST_POS]->alpha[i]));
+		uibox_add_element_toggle(UIBOX_BRUSH, 4 + ((i % BRUSH_W) * 2), 2 + (i / BRUSH_W), 2, 1,
+			((i == (BRUSH_W * BRUSH_W) / 2) ? "><" : "  "), "\xb1\xb1", (bool*)&(BRUSH_LIST[BRUSH_LIST_POS]->alpha[i]));
+	}
+
+	// ADD BORDER TO BRUSH UIBOX
+	int _tbrush_w = BRUSH_W * 2 + 2;
+	for (int j = 0; j < BRUSH_W + 2; j++)
+	{
+		for (int i = 0; i < _tbrush_w; i++)
+		{
+			if ((j > 0 && j < BRUSH_W + 1) && (i > 0 && i < _tbrush_w - 1))
+			{
+				continue;
+			}
+			uibox_set_char(UIBOX_BRUSH, (j+1) * UIBOX_BRUSH->chr_w + (i+3),
+				(j == 0) ? ((i == 0) ? CHAR_LINETL : ((i == _tbrush_w - 1) ? CHAR_LINETR : ((i == _tbrush_w / 2 - 1 || i == _tbrush_w / 2) ? CHAR_LINEHD : CHAR_LINEH))) :
+				((j == BRUSH_W + 1) ? ((i == 0) ? CHAR_LINEBL : ((i == _tbrush_w - 1) ? CHAR_LINEBR : ((i == _tbrush_w / 2 - 1 || i == _tbrush_w / 2) ? CHAR_LINEHU : CHAR_LINEH))) :
+				((i == 0 && j == BRUSH_W / 2 + 1) ? CHAR_LINEVR2 : ((i == _tbrush_w - 1 && j == BRUSH_W / 2 + 1) ? CHAR_LINEVL2 : CHAR_LINEV))), COL_EMPTY, COL_EMPTY, 1);
+		}
+	}
+	uibox_add_element_textbox(UIBOX_BRUSH, 2, BRUSH_W + 3, "SCATTER X:");
+	uibox_add_element_varbox(UIBOX_BRUSH, 13, BRUSH_W + 3, "", &BRUSH_SCATTER_X, 0);
+	uibox_add_element_textbox(UIBOX_BRUSH, 2, BRUSH_W + 6, "SCATTER Y:");
+	uibox_add_element_varbox(UIBOX_BRUSH, 13, BRUSH_W + 6, "", &BRUSH_SCATTER_Y, 0);
+	uibox_add_element_textbox(UIBOX_BRUSH, 2, BRUSH_W + 9, "SCATTER N:");
+	uibox_add_element_varbox(UIBOX_BRUSH, 13, BRUSH_W + 9, "", &BRUSH_SCATTER_N, 0);
+
+	std::string _sp = "";
+	for (int i = 0; i < 29; i++)
+	{
+		if (i == 1 || i == 28) _sp = "+"; else _sp = "-";
+		uibox_add_element_button(UIBOX_BRUSH, 2 + i, BRUSH_W + 4, 0, 1, _sp, "\xfe", &BRUSH_SCATTER_X, i);
+		uibox_add_element_button(UIBOX_BRUSH, 2 + i, BRUSH_W + 7, 0, 1, _sp, "\xfe", &BRUSH_SCATTER_Y, i);
+		if (i>0) uibox_add_element_button(UIBOX_BRUSH, 2 + (i-1), BRUSH_W + 10, 0, 1, _sp, "\xfe", &BRUSH_SCATTER_N, i);
 	}
 
 	UIBOX_TOOLS = uibox_new(0, 0, 128, 512, 0, "TOOLS");
@@ -255,28 +307,22 @@ SDL_Renderer* INIT_RENDERER(SDL_Window* WINDOW)
 	//uibox_add_element_varbox(UIBOX_TOOLS, 7, row, "", (uint16_t*)(&CANVAS_ZOOM), 0);
 	uibox_add_element_varbox_f(UIBOX_TOOLS, 7, row, "", &CANVAS_ZOOM, 0);
 	
+	// 4-bit chooser
+	/*uibox_add_element_textbox(tUIBOX_COLOR, 2, 2, "R:");
+	uibox_add_element_varbox_u8(tUIBOX_COLOR, 5, 2, "", &(BRUSH_COLOR.r), 0);
 
-	uibox_add_element_textbox(UIBOX_COLOR, 2, 2, "R:");
-	uibox_add_element_varbox_u8(UIBOX_COLOR, 5, 2, "", &(BRUSH_COLOR.r), 0);
+	uibox_add_element_textbox(tUIBOX_COLOR, 2, 6, "G:");
+	uibox_add_element_varbox_u8(tUIBOX_COLOR, 5, 6, "", &(BRUSH_COLOR.g), 0);
 
-	uibox_add_element_textbox(UIBOX_COLOR, 2, 4, "G:");
-	uibox_add_element_varbox_u8(UIBOX_COLOR, 5, 4, "", &(BRUSH_COLOR.g), 0);
+	uibox_add_element_textbox(tUIBOX_COLOR, 2, 10, "B:");
+	uibox_add_element_varbox_u8(tUIBOX_COLOR, 5, 10, "", &(BRUSH_COLOR.b), 0);
 
-	uibox_add_element_textbox(UIBOX_COLOR, 2, 6, "B:");
-	uibox_add_element_varbox_u8(UIBOX_COLOR, 5, 6, "", &(BRUSH_COLOR.b), 0);
+	uibox_add_element_textbox(tUIBOX_COLOR, 2, 14, "A:");
+	uibox_add_element_varbox_u8(tUIBOX_COLOR, 5, 14, "", &(BRUSH_COLOR.a), 0);
 
-	uibox_add_element_textbox(UIBOX_COLOR, 2, 8, "A:");
-	uibox_add_element_varbox_u8(UIBOX_COLOR, 5, 8, "", &(BRUSH_COLOR.a), 0);
+	UIBOX_COLOR = std::move(tUIBOX_COLOR);*/
 
-	std::string _sp = "-";
-	for (int i = 0; i < 17; i++)
-	{
-		if (i == 0 || i == 16 || i == 8) _sp = "+"; else _sp = "-";
-		uibox_add_element_button_u8(UIBOX_COLOR, 2 + i, 3, 1, 1, _sp, "\xfe", &(BRUSH_COLOR.r), (uint8_t)std::min(i * 16, 255));
-		uibox_add_element_button_u8(UIBOX_COLOR, 2 + i, 5, 1, 1, _sp, "\xfe", &(BRUSH_COLOR.g), (uint8_t)std::min(i * 16, 255));
-		uibox_add_element_button_u8(UIBOX_COLOR, 2 + i, 7, 1, 1, _sp, "\xfe", &(BRUSH_COLOR.b), (uint8_t)std::min(i * 16, 255));
-		uibox_add_element_button_u8(UIBOX_COLOR, 2 + i, 9, 1, 1, _sp, "\xfe", &(BRUSH_COLOR.a), (uint8_t)std::min(i * 16, 255));
-	}
+	//UIBOX_COLOR = std::move(tUIBOX_COLOR);
 
 	for (int i = 0; i < UIBOXES.size(); i++)
 	{
@@ -515,6 +561,22 @@ void SYSTEM_INPUT_UPDATE()
 					default: break;
 					}
 				}
+				else if (keysym.mod & KMOD_ALT) {
+					switch (keysym.sym) {
+					case SDLK_n: {
+						CURRENT_FILE_PTR->add_frame(1);
+						UIBOX_FRAMES_LAYERS->update_elements();
+					}
+					}
+				}
+				else if (keysym.mod & KMOD_SHIFT) {
+					switch (keysym.sym) {
+					case SDLK_n: {
+						CURRENT_FRAME_PTR->add_layer(0, 0, 255, SDL_BLENDMODE_BLEND);
+						UIBOX_FRAMES_LAYERS->update_elements();
+					}
+					}
+				}
 				else if (keysym.sym == SDLK_BACKSPACE)
 				{
 					int textlen = SDL_strlen(KEY_TEXT);
@@ -569,6 +631,40 @@ void SYSTEM_INPUT_UPDATE()
 					CURRENT_TOOL = TOOL::CANVAS;
 					//UIBOX_TOOLS->element_update = 1;
 				}
+				else if (keysym.sym == SDLK_UP)
+				{
+					//CURRENT_LAYER = std::max(0, CURRENT_LAYER - 1);
+					if (((int)CURRENT_LAYER - 1) < 0) CURRENT_LAYER = CURRENT_FRAME_PTR->layers.size() - 1; else CURRENT_LAYER--;
+					CURRENT_LAYER_PTR = (CURRENT_FRAME_PTR->layers[CURRENT_LAYER]);
+					UIBOX_FRAMES_LAYERS->update_elements();
+
+				}
+				else if (keysym.sym == SDLK_DOWN)
+				{
+					//CURRENT_LAYER = std::min((int)(CURRENT_FRAME_PTR->layers.size()-1), CURRENT_LAYER + 1);
+					if (++CURRENT_LAYER >= CURRENT_FRAME_PTR->layers.size()) CURRENT_LAYER = 0;
+					CURRENT_LAYER_PTR = (CURRENT_FRAME_PTR->layers[CURRENT_LAYER]);
+					UIBOX_FRAMES_LAYERS->update_elements();
+				}
+				else if (keysym.sym == SDLK_LEFT)
+				{
+					//CURRENT_FRAME = std::max(0, CURRENT_FRAME - 1);
+					if (((int)CURRENT_FRAME - 1) < 0) CURRENT_FRAME = CURRENT_FILE_PTR->frames.size() - 1; else CURRENT_FRAME--;
+					CURRENT_FRAME_PTR = (CURRENT_FILE_PTR->frames[CURRENT_FRAME]);
+					CURRENT_LAYER = clamp(CURRENT_LAYER, 0, CURRENT_FRAME_PTR->layers.size() - 1);
+					CURRENT_LAYER_PTR = (CURRENT_FRAME_PTR->layers[CURRENT_LAYER]);
+					UIBOX_FRAMES_LAYERS->update_elements();
+				}
+				else if (keysym.sym == SDLK_RIGHT)
+				{
+					//CURRENT_FRAME = std::min((int)(CURRENT_FILE_PTR->frames.size() - 1), CURRENT_FRAME + 1);
+					if (++CURRENT_FRAME >= CURRENT_FILE_PTR->frames.size()) CURRENT_FRAME = 0;
+					CURRENT_FRAME_PTR = (CURRENT_FILE_PTR->frames[CURRENT_FRAME]);
+					CURRENT_LAYER = clamp(CURRENT_LAYER, 0, CURRENT_FRAME_PTR->layers.size() - 1);
+					CURRENT_LAYER_PTR = (CURRENT_FRAME_PTR->layers[CURRENT_LAYER]);
+					UIBOX_FRAMES_LAYERS->update_elements();
+				}
+
 				/*
 				int16_t tools = uibox_get_uibox_by_title("TOOLS");
 				if (tools != -1) {
