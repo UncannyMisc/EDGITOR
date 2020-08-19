@@ -8,14 +8,18 @@
 #include "UNDO.h"
 #include <stack>
 #include <string>
+#include <bitset>
+#include <unordered_set>
+#include <functional>
+#include <memory>
 
 // CANVAS
 bool CANVAS_UPDATE = false;
 float CANVAS_ZOOM = 1.0;
 float CANVAS_X = 0.0;
 float CANVAS_Y = 0.0;
-uint16_t CANVAS_W = 32;
-uint16_t CANVAS_H = 32;
+uint16_t CANVAS_W = 2000;
+uint16_t CANVAS_H = 2000;
 uint16_t CANVAS_PREVW = 0;
 uint16_t CANVAS_PREVH = 0;
 int16_t CANVAS_MOUSE_X = 0;
@@ -122,11 +126,12 @@ void set_pixel_brush(int x, int y, COLOR c)
 	}
 }
 
-void set_pixel_layer(const int16_t x, const int16_t y, const COLOR c, uint16_t l)
+void set_pixel_layer(const int16_t x, const int16_t y, const COLOR c, std::shared_ptr<LAYER_INFO> l)
 {
 	if (out_canvas(x, y)) return;
 
-	CURRENT_FRAME_PTR->layers[l]->pixels[y * CANVAS_W + x] = c;
+	l->pixels[y * CANVAS_W + x] = c;
+
 	BRUSH_UPDATE_REGION = BRUSH_UPDATE_REGION.include_point(x, y);
 }
 
@@ -156,75 +161,138 @@ COLOR get_pixel_layer(const int16_t x, const int16_t y, uint16_t l)
 	return CURRENT_FRAME_PTR->layers[l]->pixels[y * CANVAS_W + x];
 }
 
-/*bool floodfill_check(const uint16_t x, const uint16_t y, const COLOR col)
+bool floodfill_check(const uint16_t x, const uint16_t y, const COLOR dest_col, const COLOR fill_col)
 {
-	return ((CURRENT_LAYER_PTR[y * CANVAS_W + x] != col) || (BRUSH_PIXELS[y * CANVAS_W + x] != col));
+	return ((CURRENT_LAYER_PTR->pixels[y * CANVAS_W + x] != dest_col) || !(BRUSH_PIXELS[y * CANVAS_W + x] != fill_col));
 }
 
-bool floodfill_check_not(const uint16_t x, const uint16_t y, const COLOR col)
+bool floodfill_check_not(const uint16_t x, const uint16_t y, const COLOR dest_col, const COLOR fill_col)
 {
-	return ((CURRENT_LAYER_PTR[y * CANVAS_W + x] == col) && (BRUSH_PIXELS[y * CANVAS_W + x] == col));
+	return ((CURRENT_LAYER_PTR->pixels[y * CANVAS_W + x] == dest_col) && (BRUSH_PIXELS[y * CANVAS_W + x] != fill_col));
 }
 
-
-void floodfill(uint16_t x, uint16_t y, const uint16_t width, const uint16_t height, const COLOR col_old, const COLOR col_new)
+void floodfill(uint16_t x, uint16_t y, const uint16_t width, const uint16_t height, const COLOR dest_col, const COLOR fill_col)
 {
 	while (true)
 	{
 		int ox = x, oy = y;
-		while (y != 0 && floodfill_check_not(x, y - 1, col_old)) y--;
-		while (x != 0 && floodfill_check_not(x - 1, y, col_old)) x--;
+		while (y != 0 && floodfill_check_not(x, y - 1, dest_col, fill_col)) y--;
+		while (x != 0 && floodfill_check_not(x - 1, y, dest_col, fill_col)) x--;
 		if (x == ox && y == oy) break;
 	}
-	floodfill_core(x, y, width, height, col_old, col_new);
+	floodfill_core(x, y, width, height, dest_col, fill_col);
 	BRUSH_UPDATE = true;
 	LAYER_UPDATE = 2;
 }
 
-void floodfill_core(uint16_t x, uint16_t y, const uint16_t width, const uint16_t height, const COLOR col_old, const COLOR col_new)
+void floodfill_core(uint16_t x, uint16_t y, const uint16_t width, const uint16_t height, const COLOR dest_col, const COLOR fill_col)
 {
 	int lastRowLength = 0;
 	do
 	{
 		int rowLength = 0, sx = x;
-		if (lastRowLength != 0 && floodfill_check(x, y, col_old))
+		if (lastRowLength != 0 && floodfill_check(x, y, dest_col, fill_col))
 		{
 			do
 			{
 				if (--lastRowLength == 0) return;
 				++x;
-			} while (floodfill_check(x, y, col_old));
+			} while (floodfill_check(x, y, dest_col, fill_col));
 			sx = x;
 		}
 		else
 		{
-			for (; x != 0 && floodfill_check_not(x - 1, y, col_old); rowLength++, lastRowLength++)
+			for (; x != 0 && floodfill_check_not(x - 1, y, dest_col, fill_col); rowLength++, lastRowLength++)
 			{
-				set_pixel(--x, y, col_new);
-				if (y != 0 && floodfill_check_not(x, y - 1, col_old)) floodfill(x, y - 1, width, height, col_old, col_new);
+				set_pixel(--x, y, fill_col);
+				if (y != 0 && floodfill_check_not(x, y - 1, dest_col, fill_col)) floodfill(x, y - 1, width, height, dest_col, fill_col);
 			}
 		}
 
-		for (; sx < width && floodfill_check_not(sx, y, col_old); rowLength++, sx++) set_pixel(sx, y, col_new);
+		for (; sx < width && floodfill_check_not(sx, y, dest_col, fill_col); rowLength++, sx++) set_pixel(sx, y, fill_col);
 		if (rowLength < lastRowLength)
 		{
 			for (int end = x + lastRowLength; ++sx < end; )
 			{
-				if (floodfill_check_not(sx, y, col_old)) floodfill_core(sx, y, width, height, col_old, col_new);
+				if (floodfill_check_not(sx, y, dest_col, fill_col)) floodfill_core(sx, y, width, height, dest_col, fill_col);
 			}
 		}
 		else if (rowLength > lastRowLength && y != 0)
 		{
 			for (int ux = x + lastRowLength; ++ux < sx; )
 			{
-				if (floodfill_check_not(ux, y - 1, col_old)) floodfill(ux, y - 1, width, height, col_old, col_new);
+				if (floodfill_check_not(ux, y - 1, dest_col, fill_col)) floodfill(ux, y - 1, width, height, dest_col, fill_col);
 			}
 		}
 		lastRowLength = rowLength;
 	} while (lastRowLength != 0 && ++y < height);
-}*/
+}
 
-void floodfill(int x, int y, COLOR oldColor, COLOR newColor)
+void floodfill_test(uint16_t x, uint16_t y, COLOR dest_col, COLOR fill_col)
+{
+	MOUSEBUTTON_LEFT = 0;
+	MOUSEBUTTON_PRESSED_LEFT = 0;
+	if (dest_col == fill_col) return;
+
+	struct t {
+		uint16_t x;
+		uint16_t y;
+		uint8_t d;
+	};
+
+	t tp;
+	uint16_t tx = x;
+	uint16_t ty = y;
+	uint8_t td = 0;
+
+	faststack<uint16_t> changed;
+	changed.reserve(CANVAS_W * CANVAS_H);
+	changed.push(0);
+	changed.push(y);
+	changed.push(x);
+
+	while (changed.size() > 2)
+	{
+		tx = changed.top();
+		changed.pop();
+		ty = changed.top();
+		changed.pop();
+		td = changed.top();
+		changed.pop();
+
+		set_pixel(tx, ty, fill_col);
+
+		if (td != 1 && tx + 1 < CANVAS_W && (get_pixel_layer(tx + 1, ty, CURRENT_LAYER) == dest_col && get_pixel(tx + 1, ty) != fill_col))
+		{
+			changed.push(2);
+			changed.push(ty);
+			changed.push(tx + 1);
+		}
+		if (td != 2 && tx - 1 >= 0 && (get_pixel_layer(tx - 1, ty, CURRENT_LAYER) == dest_col && get_pixel(tx - 1, ty) != fill_col))
+		{
+			changed.push(1);
+			changed.push(ty);
+			changed.push(tx - 1);
+		}
+		if (td != 3 && ty + 1 < CANVAS_H && (get_pixel_layer(tx, ty + 1, CURRENT_LAYER) == dest_col && get_pixel(tx, ty + 1) != fill_col))
+		{
+			changed.push(4);
+			changed.push(ty + 1);
+			changed.push(tx);
+		}
+		if (td != 4 && ty - 1 >= 0 && (get_pixel_layer(tx, ty - 1, CURRENT_LAYER) == dest_col && get_pixel(tx, ty - 1) != fill_col))
+		{
+			changed.push(3);
+			changed.push(ty - 1);
+			changed.push(tx);
+		}
+	}
+
+	BRUSH_UPDATE = true;
+	LAYER_UPDATE = 2;
+}
+
+/*void floodfill(int x, int y, COLOR oldColor, COLOR newColor)
 {
 	if (oldColor == newColor) return;
 
@@ -286,14 +354,169 @@ void floodfill(int x, int y, COLOR oldColor, COLOR newColor)
 	BRUSH_UPDATE = true;
 	LAYER_UPDATE = 2;
 	CANVAS_UPDATE = true;
-}
+}*/
+
+/*void floodfill(uint16_t x, uint16_t y, COLOR dest_col, COLOR fill_col)
+{
+	MOUSEBUTTON_LEFT = 0;
+	MOUSEBUTTON_PRESSED_LEFT = 0;
+	if (dest_col == fill_col) return;
+
+	struct t {
+		uint16_t x;
+		uint16_t y;
+		uint8_t d;
+	};
+
+	t tp;
+	uint16_t tx = x;
+	uint16_t ty = y;
+	uint8_t td = 0;
+
+	faststack<t> changed;
+	changed.reserve(CANVAS_W * CANVAS_H);
+	changed.push(t{ tx,ty,td });
+
+	while (changed.size() > 0)
+	{
+		tp = changed.top();
+		changed.pop();
+		tx = tp.x;
+		ty = tp.y;
+		td = tp.d;
+
+		set_pixel(tx, ty, fill_col);
+
+		if ((!td || td != 1) && tx + 1 < CANVAS_W)
+		{
+			if (get_pixel_layer(tx + 1, ty, CURRENT_LAYER) == dest_col && get_pixel(tx + 1, ty) != fill_col)
+			{
+				changed.push(t{ (uint16_t)(tx + 1), ty, 2 });
+			}
+		}
+		if ((!td || td != 2) && tx - 1 >= 0)
+		{
+			if (get_pixel_layer(tx - 1, ty, CURRENT_LAYER) == dest_col && get_pixel(tx - 1, ty) != fill_col)
+			{
+				changed.push(t{ (uint16_t)(tx - 1), ty, 1 });
+			}
+		}
+		if ((!td || td != 3) && ty + 1 < CANVAS_H)
+		{
+			if (get_pixel_layer(tx, ty + 1, CURRENT_LAYER) == dest_col && get_pixel(tx, ty + 1) != fill_col)
+			{
+				changed.push(t{ tx, (uint16_t)(ty + 1), 4 });
+			}
+		}
+		if ((!td || td != 4) && ty - 1 >= 0)
+		{
+			if (get_pixel_layer(tx, ty - 1, CURRENT_LAYER) == dest_col && get_pixel(tx, ty - 1) != fill_col)
+			{
+				changed.push(t{ tx, (uint16_t)(ty - 1), 3 });
+			}
+		}
+	}
+
+	std::unordered_set<int> changed;
+
+	std::function<void(int,int,int,COLOR,COLOR)> fill = [&](int x, int y, int d, COLOR dest_col, COLOR fill_col)
+	{
+		if (changed.find(x + y * CANVAS_W) == changed.end())
+		{
+			set_pixel((int16_t)x, (int16_t)y, fill_col);
+			changed.emplace(x + y * CANVAS_W);
+
+			if ((!d || d != 1) && x + 1 < CANVAS_W)
+			{
+				if (get_pixel_layer(x + 1, y, CURRENT_LAYER) == dest_col && get_pixel(x + 1, y) != fill_col)
+				{
+					fill(x + 1, y, 2, dest_col, fill_col);
+				}
+			}
+			if ((!d || d != 2) && x - 1 >= 0)
+			{
+				if (get_pixel_layer(x - 1, y, CURRENT_LAYER) == dest_col && get_pixel(x - 1, y) != fill_col)
+				{
+					fill(x - 1, y, 1, dest_col, fill_col);
+				}
+			}
+			if ((!d || d != 3) && y + 1 < CANVAS_H)
+			{
+				if (get_pixel_layer(x, y + 1, CURRENT_LAYER) == dest_col && get_pixel(x, y + 1) != fill_col)
+				{
+					fill(x, y + 1, 4, dest_col, fill_col);
+				}
+			}
+			if ((!d || d != 4) && y - 1 >= 0)
+			{
+				if (get_pixel_layer(x, y - 1, CURRENT_LAYER) == dest_col && get_pixel(x, y - 1) != fill_col)
+				{
+					fill(x, y - 1, 3, dest_col, fill_col);
+				}
+			}
+		}
+	};
+	fill(x, y, 0, dest_col, fill_col);
+
+	BRUSH_UPDATE = true;
+	LAYER_UPDATE = 2;
+}*/
+
+/*void floodfill(uint16_t x, uint16_t y, COLOR dest_col, COLOR fill_col)
+{
+	MOUSEBUTTON_LEFT = 0;
+	MOUSEBUTTON_PRESSED_LEFT = 0;
+	if (dest_col == fill_col) return;
+
+	int16_t fx = -1;
+	int16_t fy = -1;
+	int16_t tx = 0;
+	int16_t ty = 0;
+	bool x1 = 1;
+	bool x2 = 1;
+	bool y1 = 1;
+	bool y2 = 1;
+
+	for (int i = 0; i < 10; i++)
+	{
+		fx = -1;
+		x1 = 1;
+		x2 = 1;
+		ty = y + ++fy;
+		while (true)
+		{
+			tx = x + ++fx;
+			if (x1) { if (get_pixel_layer(tx, ty, CURRENT_LAYER) == dest_col) set_pixel(tx, ty, fill_col); else x1 = 0; }
+			else if (!x2) break;
+			tx = x + ~fx;
+			if (x2) { if (get_pixel_layer(tx, ty, CURRENT_LAYER) == dest_col) set_pixel(tx, ty, fill_col); else x2 = 0; }
+			else if (!x1) break;
+		}
+		fx = -1;
+		x1 = 1;
+		x2 = 1;
+		ty = y + ~fy;
+		while (true)
+		{
+			tx = x + ++fx;
+			if (x1) { if (get_pixel_layer(tx, ty, CURRENT_LAYER) == dest_col) set_pixel(tx, ty, fill_col); else x1 = 0; }
+			else if (!x2) break;
+			tx = x + ~fx;
+			if (x2) { if (get_pixel_layer(tx, ty, CURRENT_LAYER) == dest_col) set_pixel(tx, ty, fill_col); else x2 = 0; }
+			else if (!x1) break;
+		}
+	}
+
+	BRUSH_UPDATE = true;
+	LAYER_UPDATE = 2;
+}*/
 
 void refresh_canvas()
 {
 	CANVAS_W = CURRENT_FILE_PTR->canvas_w;
 	CANVAS_H = CURRENT_FILE_PTR->canvas_h;
 
-	clear_undo_stack();
+	//clear_undo_stack();
 
 	CANVAS_PITCH = (sizeof(COLOR) * CANVAS_W);
 	BRUSH_PIXELS = nullptr;

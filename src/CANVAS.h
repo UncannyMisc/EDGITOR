@@ -1,6 +1,7 @@
 #pragma once
 
 #include "VARIABLES.h"
+#include "UNDO.h"
 #include <cstdint>
 #include <memory>
 #include <vector>
@@ -115,6 +116,8 @@ struct FILE_INFO {
 	std::vector<std::shared_ptr<FRAME_INFO>> frames;
 	int canvas_w = 0;
 	int canvas_h = 0;
+	std::vector<UNDO_ENTRY> undo_stack;
+	uint16_t undo_pos = 0;
 
 	void add_frame(int frame_time)
 	{
@@ -139,17 +142,19 @@ bool out_canvas(const uint16_t x, const uint16_t y);
 
 void set_pixel(const int16_t x, const int16_t y, const COLOR c);
 void set_pixel_brush(int x, int y, COLOR c);
-void set_pixel_layer(const int16_t x, const int16_t y, const COLOR c, uint16_t l);
+void set_pixel_layer(const int16_t x, const int16_t y, const COLOR c, std::shared_ptr<LAYER_INFO> l);
 void set_pixel_line(int16_t x0, int16_t y0, const int16_t x1, const int16_t y1, COLOR c);
 
 COLOR get_pixel(const int16_t x, const int16_t y);
 COLOR get_pixel_layer(const int16_t x, const int16_t y, uint16_t l);
 
 
-//bool floodfill_check(const uint16_t x, const uint16_t y, const COLOR col);
-//bool floodfill_check_not(const uint16_t x, const uint16_t y, const COLOR col);
+bool floodfill_check(const uint16_t x, const uint16_t y, const COLOR dest_col, const COLOR fill_col);
+bool floodfill_check_not(const uint16_t x, const uint16_t y, const COLOR dest_col, const COLOR fill_col);
+void floodfill(uint16_t x, uint16_t y, const uint16_t width, const uint16_t height, const COLOR dest_col, const COLOR fill_col);
+void floodfill_core(uint16_t x, uint16_t y, const uint16_t width, const uint16_t height, const COLOR dest_col, const COLOR fill_col);
 
-void floodfill(int x, int y, COLOR newColor, COLOR oldColor);
-//void floodfill_core(uint16_t x, uint16_t y, const uint16_t width, const uint16_t height, const COLOR col_old, const COLOR col_new);
+void floodfill_test(uint16_t x, uint16_t y, COLOR dest_col, COLOR fill_col);
+
 void refresh_canvas();
 void file_add(std::string path, std::string filename, uint16_t canvas_w, uint16_t canvas_h);

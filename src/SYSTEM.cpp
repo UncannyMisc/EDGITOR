@@ -771,7 +771,8 @@ void SYSTEM_INPUT_UPDATE()
 
 			case TOOL::FILL:
 				//if (MOUSEBUTTON_PRESSED_LEFT)
-					floodfill(CANVAS_MOUSE_X, CANVAS_MOUSE_Y, get_pixel_layer(CANVAS_MOUSE_X, CANVAS_MOUSE_Y, CURRENT_LAYER), BRUSH_COLOR);
+				floodfill(CANVAS_MOUSE_X, CANVAS_MOUSE_Y, 16, 16, get_pixel_layer(CANVAS_MOUSE_X, CANVAS_MOUSE_Y, CURRENT_LAYER), BRUSH_COLOR);
+				//floodfill_test(CANVAS_MOUSE_X, CANVAS_MOUSE_Y, get_pixel_layer(CANVAS_MOUSE_X, CANVAS_MOUSE_Y, CURRENT_LAYER), BRUSH_COLOR);
 				break;
 
 			case TOOL::CANVAS:
@@ -861,7 +862,7 @@ void SYSTEM_LAYER_UPDATE()
 {
 	if ((LAYER_UPDATE == 1) && !LAYER_UPDATE_REGION.is_empty())
 	{
-		UNDO_ENTRY _u { LAYER_UPDATE_REGION, CURRENT_LAYER };
+		UNDO_ENTRY _u{ LAYER_UPDATE_REGION, CURRENT_LAYER, CURRENT_FRAME};
 
 		auto layer_data = (CURRENT_LAYER_PTR->pixels);
 		for (auto [_x, _y] : LAYER_UPDATE_REGION) {
@@ -907,7 +908,7 @@ void SYSTEM_LAYER_UPDATE()
 		SDL_UpdateTexture(BRUSH_TEXTURE, &dirty_rect, &BRUSH_PIXELS[dirty_region_start_index], CANVAS_PITCH);
 
 		// add the new undo
-		push_undo_entry(std::move(_u));
+		push_undo_entry(_u);
 
 		// update the layer we drew to
 		SDL_UpdateTexture(CURRENT_LAYER_PTR->texture, &dirty_rect, &layer_data[dirty_region_start_index], CANVAS_PITCH);

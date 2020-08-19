@@ -9,14 +9,16 @@
 struct UNDO_ENTRY
 {
 	RECT affected_region;
-	uint16_t affected_layer = 0;
+	uint16_t affected_layer;
+	uint16_t affected_frame;
 
 	std::vector<COLOR> undo_pixels;
 	std::vector<COLOR> redo_pixels;
 
-	UNDO_ENTRY(RECT _rect, uint16_t _layer)
-		: affected_region {_rect}
-		, affected_layer {_layer}
+	UNDO_ENTRY(RECT _rect, uint16_t _layer, uint16_t _frame)
+		: affected_region{ _rect }
+		, affected_layer{ _layer }
+		, affected_frame{ _frame }
 		, undo_pixels(_rect.width()*_rect.height())
 		, redo_pixels(_rect.width()*_rect.height())
 	{
@@ -31,7 +33,7 @@ struct UNDO_ENTRY
 };
 
 
-void push_undo_entry(UNDO_ENTRY);
+void push_undo_entry(UNDO_ENTRY undo_entry);
 void clear_undo_stack();
 
 // NOTE: these names are way too short but I couldn't think of anything better
