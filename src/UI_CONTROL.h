@@ -15,6 +15,7 @@
 #include "VARIABLES.h"
 #include "SDL_image.h"
 #include "SUPERSTACK.h"
+#include "SDL_gifwrap.h"
 
 //struct UIBOX_INFO;
 struct UIBOX_ELEMENT_MAIN;
@@ -484,13 +485,13 @@ struct UIBOX_INFO_FILE_EXPLORER : public UIBOX_INFO {
 			}
 			else
 			{
-				std::string _tstr = PATH_FILES[_file].first.substr(PATH_FILES[_file].first.size() - 3, 3);
-				if (_tstr == "png" || _tstr == "PNG")
-				{
+				//std::string _tstr = PATH_FILES[_file].first.substr(PATH_FILES[_file].first.size() - 3, 3);
+				//if (_tstr == "png" || _tstr == "PNG")
+				//{
 					uibox_add_element_button_files_load(this, 2, (4 + _file) - this->scroll_y, 0, 1, (_file < (PATH_FILES.size() - 1) ? "\xc5 " : "\xc1 ") + PATH_FILES[_file].first, CURRENT_PATH, PATH_FILES[_file].first);
-				}
-				else
-					uibox_add_element_textbox(this, 2, (4 + _file) - this->scroll_y, "\xb3 " + PATH_FILES[_file].first);
+				//}
+				//else
+					//uibox_add_element_textbox(this, 2, (4 + _file) - this->scroll_y, "\xb3 " + PATH_FILES[_file].first);
 			}
 			this->scroll_element_list.push_back(this->element_list.size() - 1);
 		}
@@ -926,7 +927,17 @@ struct UIBOX_ELEMENT_BUTTON_FILES_LOAD : public UIBOX_ELEMENT_MAIN {
 
 			if (!_file_exists)
 			{
-				SDL_Surface* _surfload = IMG_Load((path + file).c_str());
+				SDL_Surface* _surfload;
+				std::string _tstr = file.substr(file.size() - 3, 3);
+				if (_tstr == "png" || _tstr == "PNG")
+				{
+					_surfload = IMG_Load((path + file).c_str());
+				}
+				else if (_tstr == "gif" || _tstr == "GIF") {
+					GIF_Image* gif = GIF_LoadImage((path + file).c_str());
+					_surfload = gif->frames[0]->surface;
+				}
+				
 				SDL_Surface* _surf = SDL_ConvertSurfaceFormat(_surfload, SDL_PIXELFORMAT_RGBA32, 0);
 
 				CANVAS_W = _surf->w;

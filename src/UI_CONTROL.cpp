@@ -98,7 +98,7 @@ void UPDATE_PATH_FILES()
 			else
 			{
 				std::string _tstr = _name.substr(_name.size() - 3, 3);
-				if (_tstr == "png" || _tstr == "PNG") PATH_FILES.push_back(std::pair{ _name,0 });
+				if (_tstr == "png" || _tstr == "PNG" || _tstr == "gif" || _tstr == "GIF") PATH_FILES.push_back(std::pair{ _name,0 });
 			}
 				//PATH_FILES.push_back(std::pair{ _name,0 });
 		}

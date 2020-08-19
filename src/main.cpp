@@ -23,6 +23,7 @@
 #include "CANVAS.h"
 #include "BRUSH.h"
 #include "UNDO.h"
+//#include "SDL_gifwrap.h"
 #include <filesystem>
 #include <fstream>
 //#include "SUPERSTACK.h"
@@ -43,6 +44,9 @@ int main(int, char*[])
 		std::cout << p.path() << " : " << ((float)p.file_size())/1000.0f << "KB" << '\n';*/
 
 	// MAIN INIT
+
+	//GIF_Image* gif = GIF_LoadImage("my_animation.gif");
+
 	if (!INIT_SDL())
 	{
 		PRINT("COULD NOT START");
