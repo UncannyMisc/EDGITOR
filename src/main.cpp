@@ -74,7 +74,6 @@ int main(int, char*[])
 		// SET WINDOW X, Y, W, H
 		// CLEAR RENDER TARGET
 		SDL_GetWindowSize(WINDOW, &WINDOW_W, &WINDOW_H);
-		SDL_SetWindowMinimumSize(WINDOW, 1168, 912);
 		SDL_GetWindowPosition(WINDOW, &WINDOW_X, &WINDOW_Y);
 		SDL_SetRenderTarget(RENDERER, nullptr);
 		SDL_SetRenderDrawColor(RENDERER, 0, 0, 0, 255);

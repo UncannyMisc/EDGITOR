@@ -121,6 +121,9 @@ SDL_Window* INIT_WINDOW()
 	WINDOW_X = ((DISPLAY_W / 2) - (WINDOW_W / 2));
 	WINDOW_Y = ((DISPLAY_H / 2) - (WINDOW_H / 2));
 	SDL_SetWindowPosition(WINDOW, WINDOW_X, WINDOW_Y);
+
+	SDL_SetWindowMinimumSize(WINDOW, 1168, 900);
+
 	return WINDOW;
 }
 
@@ -216,11 +219,11 @@ SDL_Renderer* INIT_RENDERER(SDL_Window* WINDOW)
 	UIBOX_COLOR = uibox_new_color(0, 9999, 272, 400, 1, "COLOUR");
 	UIBOX_BRUSH = uibox_new(9999, 9999, 272, 400, 1, "BRUSH");
 	//UIBOX_FILE_EXPLORER = uibox_new((WINDOW_W / 2) - 320, (WINDOW_H / 2) - 240, 640, 480, 1, "FILE EXPLORER");
-	UIBOX_FILE_EXPLORER = uibox_new_file_explorer(640 + FONT_CHRW*2, 0, 512, 512, 0, "FILE EXPLORER");
+	UIBOX_FILE_EXPLORER = uibox_new_file_explorer(640 + FONT_CHRW*2, 0, 512, 500, 0, "FILE EXPLORER");
 	UIBOX_FILE_EXPLORER->snap = 1;
 	UIBOX_FILE_EXPLORER->can_scroll = true;
 	uibox_shrink(UIBOX_FILE_EXPLORER, 1);
-	UIBOX_OPEN_FILES = uibox_new_open_files(128 + FONT_CHRW, 0, 512, 512, 0, "OPEN FILES");
+	UIBOX_OPEN_FILES = uibox_new_open_files(128 + FONT_CHRW, 0, 512, 500, 0, "OPEN FILES");
 	UIBOX_OPEN_FILES->snap = 1;
 	uibox_shrink(UIBOX_OPEN_FILES, 1);
 
@@ -265,7 +268,7 @@ SDL_Renderer* INIT_RENDERER(SDL_Window* WINDOW)
 		if (i>0) uibox_add_element_button(UIBOX_BRUSH, 2 + (i-1), BRUSH_W + 10, 0, 1, _sp, "\xfe", &BRUSH_SCATTER_N, i);
 	}
 
-	UIBOX_TOOLS = uibox_new(0, 0, 128, 512, 0, "TOOLS");
+	UIBOX_TOOLS = uibox_new(0, 0, 128, 500, 0, "TOOLS");
 	UIBOX_TOOLS->snap = 1;
 	
 	int row = 2;
@@ -771,7 +774,7 @@ void SYSTEM_INPUT_UPDATE()
 
 			case TOOL::FILL:
 				//if (MOUSEBUTTON_PRESSED_LEFT)
-				floodfill(CANVAS_MOUSE_X, CANVAS_MOUSE_Y, 16, 16, get_pixel_layer(CANVAS_MOUSE_X, CANVAS_MOUSE_Y, CURRENT_LAYER), BRUSH_COLOR);
+				floodfill(CANVAS_MOUSE_X, CANVAS_MOUSE_Y, CANVAS_W, CANVAS_H, get_pixel_layer(CANVAS_MOUSE_X, CANVAS_MOUSE_Y, CURRENT_LAYER), BRUSH_COLOR);
 				//floodfill_test(CANVAS_MOUSE_X, CANVAS_MOUSE_Y, get_pixel_layer(CANVAS_MOUSE_X, CANVAS_MOUSE_Y, CURRENT_LAYER), BRUSH_COLOR);
 				break;
 

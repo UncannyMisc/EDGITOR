@@ -15,7 +15,6 @@
 #include "VARIABLES.h"
 #include "SDL_image.h"
 #include "SUPERSTACK.h"
-#include "SDL_gifwrap.h"
 
 //struct UIBOX_INFO;
 struct UIBOX_ELEMENT_MAIN;
@@ -239,6 +238,7 @@ void uibox_add_element_button_color(UIBOX_INFO* uibox, uint16_t x, uint16_t y, i
 void uibox_add_element_button_string(UIBOX_INFO* uibox, uint16_t x, uint16_t y, int16_t w, int16_t h, std::string text, std::string sel_text, std::string* input_var, std::string button_var);
 void uibox_add_element_button_files_goto(UIBOX_INFO* uibox, uint16_t x, uint16_t y, int16_t w, int16_t h, std::string text, std::string* input_var, std::string button_var);
 void uibox_add_element_button_files_load(UIBOX_INFO* uibox, uint16_t x, uint16_t y, int16_t w, int16_t h, std::string text, std::string path, std::string file);
+void uibox_add_element_button_files_open(UIBOX_INFO* uibox, uint16_t x, uint16_t y, int16_t w, int16_t h, std::string text, std::string file);
 void uibox_add_element_toggle(UIBOX_INFO* uibox, uint16_t x, uint16_t y, int16_t w, int16_t h, std::string text, std::string sel_text, bool* input_var);
 void uibox_add_element_slider(UIBOX_INFO* uibox, uint16_t x, uint16_t y, std::string text, uint16_t* input_var);
 void uibox_add_element_textinput(UIBOX_INFO* uibox, uint16_t x, uint16_t y, std::string text);
@@ -523,7 +523,7 @@ struct UIBOX_INFO_OPEN_FILES : public UIBOX_INFO {
 
 		for (int i = 0; i < FILES.size(); i++)
 		{
-			uibox_add_element_textbox(this, 2, 2 + i, FILES[i]->filename);
+			uibox_add_element_button_files_open(this, 2, 2 + i, 0, 1, FILES[i]->filename, FILES[i]->filename);
 		}
 	}
 };
@@ -656,12 +656,12 @@ struct UIBOX_ELEMENT_VARBOX : public UIBOX_ELEMENT_MAIN {
 				1);
 		}
 	}
-	/*bool is_sel() override
+	bool is_sel() override
 	{
-		//bool _c = *input_var != var;
-		//if (_c) var = *input_var;
-		//return _c;
-	}*/
+		bool _c = *input_var != var;
+		if (_c) var = *input_var;
+		return _c;
+	}
 };
 
 struct UIBOX_ELEMENT_VARBOX_U8 : public UIBOX_ELEMENT_MAIN {
@@ -934,8 +934,10 @@ struct UIBOX_ELEMENT_BUTTON_FILES_LOAD : public UIBOX_ELEMENT_MAIN {
 					_surfload = IMG_Load((path + file).c_str());
 				}
 				else if (_tstr == "gif" || _tstr == "GIF") {
-					GIF_Image* gif = GIF_LoadImage((path + file).c_str());
-					_surfload = gif->frames[0]->surface;
+					
+					//GIF_Image* gif = GIF_LoadImage((path + file).c_str());
+					//_surfload = gif->frames[0]->surface;
+					_surfload = IMG_Load((path + file).c_str());
 				}
 				
 				SDL_Surface* _surf = SDL_ConvertSurfaceFormat(_surfload, SDL_PIXELFORMAT_RGBA32, 0);
@@ -970,6 +972,54 @@ struct UIBOX_ELEMENT_BUTTON_FILES_LOAD : public UIBOX_ELEMENT_MAIN {
 
 				UIBOX_OPEN_FILES->update_elements();
 				//uibox_update_open_files();
+			}
+
+			// CENTER CANVAS
+			CANVAS_X = (WINDOW_W * 0.5f) - (CANVAS_W * 0.5f);
+			CANVAS_Y = (WINDOW_H * 0.5f) - (CANVAS_H * 0.5f);
+			CANVAS_X_ANIM = CANVAS_X;
+			CANVAS_Y_ANIM = CANVAS_Y;
+			CANVAS_W_ANIM = CANVAS_W;
+			CANVAS_H_ANIM = CANVAS_H;
+			CELL_W_ANIM = CELL_W;
+			CELL_H_ANIM = CELL_H;
+			CANVAS_ZOOM = 1;
+		}
+	}
+};
+
+struct UIBOX_ELEMENT_BUTTON_FILES_OPEN : public UIBOX_ELEMENT_MAIN {
+	std::string file;
+
+	void create(UIBOX_INFO* uibox) override
+	{
+		uibox_set_string(uibox, text, x, y, COL_WHITE, uibox->element_update);
+	}
+
+	void set() override
+	{
+		if (MOUSEBUTTON_PRESSED_LEFT)
+		{
+			BRUSH_UPDATE = 0;
+			MOUSEBUTTON_LEFT = 0;
+			MOUSEBUTTON_PRESSED_LEFT = 0;
+
+			for (int i = 0; i < FILES.size(); ++i)
+			{
+				auto _f = FILES[i];
+				if ((_f->filename) == (this->file))
+				{
+					CANVAS_UPDATE = true;
+					CURRENT_FILE = i;
+					CURRENT_FILE_PTR = _f;
+					CURRENT_FRAME = 0;
+					CURRENT_FRAME_PTR = _f->frames[0];
+					CURRENT_LAYER = 0;
+					CURRENT_LAYER_PTR = _f->frames[0]->layers[0];
+
+					refresh_canvas();
+					break;
+				}
 			}
 
 			// CENTER CANVAS

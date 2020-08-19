@@ -720,6 +720,19 @@ void uibox_add_element_button_files_load(UIBOX_INFO* uibox, uint16_t x, uint16_t
 	uibox->element_list.push_back(std::move(_element));
 }
 
+void uibox_add_element_button_files_open(UIBOX_INFO* uibox, uint16_t x, uint16_t y, int16_t w, int16_t h, std::string text, std::string file)
+{
+	if (x + text.size() > (uibox->chr_w - 1)) return;
+	std::shared_ptr<UIBOX_ELEMENT_BUTTON_FILES_OPEN> _element = std::make_shared<UIBOX_ELEMENT_BUTTON_FILES_OPEN>();
+	uibox_element_setxywh(uibox, _element, x, y, w, h, text, "");
+
+	_element->text = text;
+	_element->sel_text = text;
+	_element->file = file;
+	_element->create(uibox);
+	uibox->element_list.push_back(std::move(_element));
+}
+
 void uibox_add_element_toggle(UIBOX_INFO* uibox, uint16_t x, uint16_t y, int16_t w, int16_t h, std::string text, std::string sel_text, bool* input_var)
 {
 	std::shared_ptr<UIBOX_ELEMENT_TOGGLE> _element = std::make_shared<UIBOX_ELEMENT_TOGGLE>();
