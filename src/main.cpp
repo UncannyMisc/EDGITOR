@@ -8,12 +8,12 @@
 
 #ifdef __APPLE__
 #include <SDL2/SDL.h>
-#include <SDL2_ttf/SDL_ttf.h>
 #include <SDL2_image/SDL_image.h>
+#include <SDL2_ttf/SDL_ttf.h>
 #else
 #include <SDL.h>
-#include <SDL_ttf.h>
 #include <SDL_image.h>
+#include <SDL_ttf.h>
 #endif
 
 #include "SYSTEM.h"
@@ -23,10 +23,9 @@
 #include "CANVAS.h"
 #include "BRUSH.h"
 #include "UNDO.h"
-//#include "SDL_gifwrap.h"
 #include <filesystem>
 #include <fstream>
-//#include "SUPERSTACK.h"
+#include "CUBE_VIEW.h"
 namespace fs = std::filesystem;
 
   //
@@ -56,6 +55,9 @@ int main(int, char*[])
 	FONTMAP = INIT_FONT();
 	SDL_SetTextureBlendMode(FONTMAP, SDL_BLENDMODE_NONE);
 
+	CUBE_VIEW_INIT();
+	CUBE_VIEW_UPDATE();
+
 	while (!QUIT) // MAIN LOOP
 	{
 
@@ -66,6 +68,8 @@ int main(int, char*[])
         }
         
 		const Uint64 fps_start = SDL_GetPerformanceCounter(); // fps counter
+
+		CUBE_VIEW_RENDER();
 
 		BRUSH_UPDATE = false; // reset brush update
 
@@ -180,12 +184,33 @@ int main(int, char*[])
 		SDL_RenderFillRect(RENDERER, &_trect);
 		
 		_trect = {(int)CANVAS_X_ANIM, (int)CANVAS_Y_ANIM, (int)CANVAS_W_ANIM, (int)CANVAS_H_ANIM};
+		// auto &&
+		auto draw_layer = [](int a, auto r, int x, int y)
+		{
+			SDL_SetTextureBlendMode(CURRENT_FRAME_PTR->layers[a]->texture, (SDL_BlendMode)CURRENT_FRAME_PTR->layers[a]->blendmode);
+			r = { (int)(CANVAS_X_ANIM + (x * CANVAS_W_ANIM)), (int)(CANVAS_Y_ANIM + (y * CANVAS_H_ANIM)), (int)CANVAS_W_ANIM, (int)CANVAS_H_ANIM };
+			SDL_RenderCopy(RENDERER, CURRENT_FRAME_PTR->layers[a]->texture, nullptr, &r);
+			if (a == CURRENT_LAYER)
+			{
+				if (BRUSH_UPDATE)
+				{
+					SDL_SetTextureBlendMode(BRUSH_TEXTURE, SDL_BLENDMODE_BLEND);
+					SDL_RenderCopy(RENDERER, BRUSH_TEXTURE, nullptr, &r);
+				}
+			}
+		};
 
 		// RENDER THE LAYERS
 		for (uint16_t i = 0; i < CURRENT_FRAME_PTR->layers.size(); i++)
 		{
 			//LAYER_INFO* layer = CURRENT_FRAME_PTR->layers[i];// LAYERS[i];
-			SDL_SetTextureBlendMode(CURRENT_FRAME_PTR->layers[i]->texture, (SDL_BlendMode)CURRENT_FRAME_PTR->layers[i]->blendmode);
+			/*SDL_SetTextureBlendMode(CURRENT_FRAME_PTR->layers[i]->texture, (SDL_BlendMode)CURRENT_FRAME_PTR->layers[i]->blendmode);
+			_trect = { (int)CANVAS_X_ANIM, (int)CANVAS_Y_ANIM, (int)CANVAS_W_ANIM, (int)CANVAS_H_ANIM };
+			SDL_RenderCopy(RENDERER, CURRENT_FRAME_PTR->layers[i]->texture, nullptr, &_trect);
+
+			_trect = { (int)(CANVAS_X_ANIM - CANVAS_W_ANIM), (int)CANVAS_Y_ANIM, (int)CANVAS_W_ANIM, (int)CANVAS_H_ANIM };
+			SDL_RenderCopy(RENDERER, CURRENT_FRAME_PTR->layers[i]->texture, nullptr, &_trect);
+			_trect = { (int)(CANVAS_X_ANIM + CANVAS_W_ANIM), (int)CANVAS_Y_ANIM, (int)CANVAS_W_ANIM, (int)CANVAS_H_ANIM };
 			SDL_RenderCopy(RENDERER, CURRENT_FRAME_PTR->layers[i]->texture, nullptr, &_trect);
 			if (i == CURRENT_LAYER)
 			{
@@ -194,7 +219,17 @@ int main(int, char*[])
 					SDL_SetTextureBlendMode(BRUSH_TEXTURE, SDL_BLENDMODE_BLEND);
 					SDL_RenderCopy(RENDERER, BRUSH_TEXTURE, nullptr, &_trect);
 				}
-			}
+			}*/
+			draw_layer(i, _trect, 0, 0);
+
+			draw_layer(i, _trect, 1, 0);
+			draw_layer(i, _trect, -1, 0);
+			draw_layer(i, _trect, 0, 1);
+			draw_layer(i, _trect, 0, -1);
+			draw_layer(i, _trect, 1, 1);
+			draw_layer(i, _trect, 1, -1);
+			draw_layer(i, _trect, -1, 1);
+			draw_layer(i, _trect, -1, -1);
 		}
 
 		// the grey box around the canvas

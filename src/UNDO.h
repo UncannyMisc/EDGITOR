@@ -4,18 +4,18 @@
 #include <cstdint>
 
 #include "COLOR.h"
-#include "RECT.h"
+#include "QUAD.h"
 
 struct UNDO_ENTRY
 {
-	RECT affected_region;
+	QUAD affected_region;
 	uint16_t affected_layer;
 	uint16_t affected_frame;
 
 	std::vector<COLOR> undo_pixels;
 	std::vector<COLOR> redo_pixels;
 
-	UNDO_ENTRY(RECT _rect, uint16_t _layer, uint16_t _frame)
+	UNDO_ENTRY(QUAD _rect, uint16_t _layer, uint16_t _frame)
 		: affected_region{ _rect }
 		, affected_layer{ _layer }
 		, affected_frame{ _frame }
@@ -42,4 +42,4 @@ void redo();
 
 
 extern uint16_t UNDO_UPDATE_LAYER;
-extern RECT UNDO_UPDATE_REGION;
+extern QUAD UNDO_UPDATE_REGION;

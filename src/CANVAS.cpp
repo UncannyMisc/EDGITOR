@@ -1,6 +1,6 @@
 #include "CANVAS.h"
 #include "COLOR.h"
-#include "RECT.h"
+#include "QUAD.h"
 #include "VARIABLES.h"
 #include "BRUSH.h"
 #include "SUPERSTACK.h"
@@ -18,8 +18,8 @@ bool CANVAS_UPDATE = false;
 float CANVAS_ZOOM = 1.0;
 float CANVAS_X = 0.0;
 float CANVAS_Y = 0.0;
-uint16_t CANVAS_W = 1024;
-uint16_t CANVAS_H = 512;
+uint16_t CANVAS_W = 16;
+uint16_t CANVAS_H = 16;
 uint16_t CANVAS_PREVW = 0;
 uint16_t CANVAS_PREVH = 0;
 int16_t CANVAS_MOUSE_X = 0;
@@ -56,7 +56,7 @@ std::vector<std::shared_ptr<FILE_INFO>> FILES;
 uint16_t CURRENT_LAYER = 0;
 std::shared_ptr<LAYER_INFO> CURRENT_LAYER_PTR = nullptr;
 int16_t LAYER_UPDATE = 0;
-RECT LAYER_UPDATE_REGION = RECT::empty();
+QUAD LAYER_UPDATE_REGION = QUAD::empty();
 //std::vector<LAYER_INFO> LAYERS;
 
 // FRAME
@@ -84,6 +84,9 @@ std::shared_ptr<FILE_INFO> CURRENT_FILE_PTR = nullptr;
 	CURRENT_LAYER = 0;
 	CURRENT_LAYER_PTR = LAYERS[CURRENT_LAYER].pixels.get();
 }*/
+
+bool MODE_TILEX = 1;
+bool MODE_TILEY = 1;
 
 bool in_canvas(const uint16_t x, const uint16_t y)
 {
@@ -118,9 +121,14 @@ void set_pixel_brush(int x, int y, COLOR c)
 				//_ty = ((_ty + BRUSH_Y) + j);
 				//if (!in_canvas(_tx, _ty)) continue;
 				uint8_t _a = (BRUSH_LIST[BRUSH_LIST_POS]->alpha[j * BRUSH_W + i]);
-				if (!_a) continue;
-				//if (BRUSH_PIXELS[_tx, _ty] != 0x00000000) continue;
-				if (_a) set_pixel(((_tx + BRUSH_X) + i), ((_ty + BRUSH_Y) + j), c);
+				if (!_a) continue; else {
+					if (MODE_TILEX) _tx = (_tx + (CELL_W * 10)) % CELL_W;
+					if (MODE_TILEY) _ty = (_ty + (CELL_H * 10)) % CELL_H;
+
+					set_pixel((_tx + BRUSH_X) + i, (_ty + BRUSH_Y) + j, c);
+				}
+
+				//if (BRUSH_PIXELS[(_tx + BRUSH_X) + i, (_ty + BRUSH_Y) + j] != COL_EMPTY) continue;
 			}
 		}
 	}

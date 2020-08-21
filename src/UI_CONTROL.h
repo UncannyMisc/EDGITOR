@@ -15,6 +15,7 @@
 #include "VARIABLES.h"
 #include "SDL_image.h"
 #include "SUPERSTACK.h"
+#include "CUBE_VIEW.h"
 
 //struct UIBOX_INFO;
 struct UIBOX_ELEMENT_MAIN;
@@ -239,6 +240,7 @@ void uibox_add_element_button_string(UIBOX_INFO* uibox, uint16_t x, uint16_t y, 
 void uibox_add_element_button_files_goto(UIBOX_INFO* uibox, uint16_t x, uint16_t y, int16_t w, int16_t h, std::string text, std::string* input_var, std::string button_var);
 void uibox_add_element_button_files_load(UIBOX_INFO* uibox, uint16_t x, uint16_t y, int16_t w, int16_t h, std::string text, std::string path, std::string file);
 void uibox_add_element_button_files_open(UIBOX_INFO* uibox, uint16_t x, uint16_t y, int16_t w, int16_t h, std::string text, std::string file);
+void uibox_add_element_button_cube_face(UIBOX_INFO* uibox, uint16_t x, uint16_t y, int16_t w, int16_t h, std::string text, uint16_t file_n, uint16_t faces_n);
 void uibox_add_element_toggle(UIBOX_INFO* uibox, uint16_t x, uint16_t y, int16_t w, int16_t h, std::string text, std::string sel_text, bool* input_var);
 void uibox_add_element_slider(UIBOX_INFO* uibox, uint16_t x, uint16_t y, std::string text, uint16_t* input_var);
 void uibox_add_element_textinput(UIBOX_INFO* uibox, uint16_t x, uint16_t y, std::string text);
@@ -265,6 +267,8 @@ struct UIBOX_INFO_COLOR : public UIBOX_INFO {
 	uint8_t ta1 = 0x00;
 	uint8_t ta2 = 0x00;
 	uint16_t _ti = 1;
+
+	COLOR col = COL_EMPTY;
 
 	bool _init = 1;
 	bool _tb = 0;
@@ -382,6 +386,11 @@ struct UIBOX_INFO_COLOR : public UIBOX_INFO {
 			this->_init = 0;
 		}
 		
+		if (col != BRUSH_COLOR)
+		{
+			col = BRUSH_COLOR;
+		}
+		else
 		if (
 			tr1 != r1 ||
 			tr2 != r2 ||
@@ -394,6 +403,7 @@ struct UIBOX_INFO_COLOR : public UIBOX_INFO {
 			)
 		{
 			BRUSH_COLOR = COLOR{ (uint8_t)(HI_NIBBLE(r1) | LO_NIBBLE(r2)),(uint8_t)(HI_NIBBLE(g1) | LO_NIBBLE(g2)),(uint8_t)(HI_NIBBLE(b1) | LO_NIBBLE(b2)),(uint8_t)(HI_NIBBLE(a1) | LO_NIBBLE(a2)) };
+			col = BRUSH_COLOR;
 
 			tr1 = r1;
 			tr2 = r2;
@@ -408,6 +418,31 @@ struct UIBOX_INFO_COLOR : public UIBOX_INFO {
 
 	void drawloop() override
 	{
+		if (col != BRUSH_COLOR)
+		{
+			col = BRUSH_COLOR;
+
+			r1 = (uint8_t)(HI_NIBBLE(BRUSH_COLOR.r) | (HI_NIBBLE(BRUSH_COLOR.r) >> 4));
+			r2 = (uint8_t)(LO_NIBBLE(BRUSH_COLOR.r) | (LO_NIBBLE(BRUSH_COLOR.r) << 4));
+			g1 = (uint8_t)(HI_NIBBLE(BRUSH_COLOR.g) | (HI_NIBBLE(BRUSH_COLOR.g) >> 4));
+			g2 = (uint8_t)(LO_NIBBLE(BRUSH_COLOR.g) | (LO_NIBBLE(BRUSH_COLOR.g) << 4));
+			b1 = (uint8_t)(HI_NIBBLE(BRUSH_COLOR.b) | (HI_NIBBLE(BRUSH_COLOR.b) >> 4));
+			b2 = (uint8_t)(LO_NIBBLE(BRUSH_COLOR.b) | (LO_NIBBLE(BRUSH_COLOR.b) << 4));
+			a1 = (uint8_t)(HI_NIBBLE(BRUSH_COLOR.a) | (HI_NIBBLE(BRUSH_COLOR.a) >> 4));
+			a2 = (uint8_t)(LO_NIBBLE(BRUSH_COLOR.a) | (LO_NIBBLE(BRUSH_COLOR.a) << 4));
+
+			tr1 = r1;
+			tr2 = r2;
+			tg1 = g1;
+			tg2 = g2;
+			tb1 = b1;
+			tb2 = b2;
+			ta1 = a1;
+			ta2 = a2;
+
+			this->update_elements();
+		}
+
 		SDL_SetRenderTarget(RENDERER, texture);
 		SDL_SetRenderDrawBlendMode(RENDERER, SDL_BLENDMODE_NONE);
 
@@ -1032,6 +1067,27 @@ struct UIBOX_ELEMENT_BUTTON_FILES_OPEN : public UIBOX_ELEMENT_MAIN {
 			CELL_W_ANIM = CELL_W;
 			CELL_H_ANIM = CELL_H;
 			CANVAS_ZOOM = 1;
+		}
+	}
+};
+
+struct UIBOX_ELEMENT_BUTTON_CUBE_FACE : public UIBOX_ELEMENT_MAIN {
+	uint16_t file_n;
+	uint16_t faces_n;
+
+	void create(UIBOX_INFO* uibox) override
+	{
+		uibox_set_string(uibox, text, x, y, COL_WHITE, uibox->element_update);
+	}
+
+	void set() override
+	{
+		if (MOUSEBUTTON_PRESSED_LEFT)
+		{
+			auto _tn = FILES[CURRENT_FILE];
+			CUBE_VIEW_FACES[faces_n]->file = std::move(_tn);
+			CUBE_VIEW_FACES[faces_n]->update = 1;
+			CUBE_VIEW_UPDATE();
 		}
 	}
 };

@@ -9,7 +9,7 @@
 #include <string>
 
 struct COLOR;
-struct RECT;
+struct QUAD;
 struct SDL_Renderer;
 struct SDL_Texture;
 
@@ -60,7 +60,7 @@ extern std::vector<std::shared_ptr<FILE_INFO>> FILES;
 extern uint16_t CURRENT_LAYER;
 extern std::shared_ptr<LAYER_INFO> CURRENT_LAYER_PTR;
 extern int16_t LAYER_UPDATE;
-extern RECT LAYER_UPDATE_REGION;
+extern QUAD LAYER_UPDATE_REGION;
 
 // FRAME
 extern uint16_t CURRENT_FRAME;
@@ -132,6 +132,8 @@ struct FILE_INFO {
 	}
 };
 
+extern bool MODE_TILEX;
+extern bool MODE_TILEY;
 
 bool in_canvas(const uint16_t x, const uint16_t y);
 bool out_canvas(const uint16_t x, const uint16_t y);

@@ -4,11 +4,11 @@
 #include "FUNCTIONS.h"
 #include "VARIABLES.h"
 #include "BRUSH.h"
-#include "RECT.h"
+#include "QUAD.h"
 #include <memory>
 
 uint16_t UNDO_UPDATE_LAYER = 0;
-RECT UNDO_UPDATE_REGION = RECT::empty();
+QUAD UNDO_UPDATE_REGION = QUAD::empty();
 
 void push_undo_entry(UNDO_ENTRY undo_entry)
 {

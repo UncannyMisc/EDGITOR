@@ -1,12 +1,16 @@
 #include "BRUSH.h"
 #include "COLOR.h"
-#include "RECT.h"
+#include "QUAD.h"
 
 // manpat: really not a fan of this - this should be cmakes job :(
 #ifdef __APPLE__
 #include <SDL2/SDL.h>
+#include <SDL2_image/SDL_image.h>
+#include <SDL2_ttf/SDL_ttf.h>
 #else
 #include <SDL.h>
+#include <SDL_image.h>
+#include <SDL_ttf.h>
 #endif
 
 
@@ -17,7 +21,7 @@ bool BRUSH_UPDATE = false;
 int16_t BRUSH_X = 0;
 int16_t BRUSH_Y = 0;
 uint16_t BRUSH_W = 0;
-RECT BRUSH_UPDATE_REGION = RECT::empty();
+QUAD BRUSH_UPDATE_REGION = QUAD::empty();
 std::unique_ptr<COLOR[]> BRUSH_PIXELS;
 COLOR BRUSH_COLOR {255, 255, 255, 128};
 COLOR UNDO_COLOR{255, 0, 64, 192};

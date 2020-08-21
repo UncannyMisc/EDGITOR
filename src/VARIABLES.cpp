@@ -5,11 +5,12 @@
 // manpat: really not a fan of this - this should be cmakes job :(
 #ifdef __APPLE__
 #include <SDL2/SDL.h>
-#include <SDL2_ttf/SDL_ttf.h>
 #include <SDL2_image/SDL_image.h>
+#include <SDL2_ttf/SDL_ttf.h>
 #else
 #include <SDL.h>
 #include <SDL_image.h>
+#include <SDL_ttf.h>
 #endif
 
 
@@ -76,14 +77,14 @@ uint16_t TEMP_CURRENT_TOOL = CURRENT_TOOL;
 
 SDL_Cursor* create_system_cursor()
 {
-	static const bool arrow[] = {
-		1,0,0,0,0,0,1,0,
-		0,1,0,0,0,1,0,0,
-		0,0,1,0,1,0,0,0,
-		0,0,0,1,0,0,0,0,
-		0,0,1,0,1,0,0,0,
-		0,1,0,0,0,1,0,0,
-		1,0,0,0,0,0,1,0,
+	static const int arrow[] = {
+		2,2,0,0,0,2,2,0,
+		2,1,2,0,2,1,2,0,
+		0,2,1,2,1,2,0,0,
+		0,0,2,1,2,0,0,0,
+		0,2,1,2,1,2,0,0,
+		2,1,2,0,2,1,2,0,
+		2,2,0,0,0,2,2,0,
 		0,0,0,0,0,0,0,0
 	};
 
@@ -102,9 +103,13 @@ SDL_Cursor* create_system_cursor()
 				++n;
 				data[n] = mask[i] = 0;
 			}
-			if (arrow[i * 8 + j])
+			if (arrow[i * 8 + j] == 1)
 			{
 				data[n] |= 0x00;
+				mask[n] |= 0x01;
+			} else
+			if (arrow[i * 8 + j] == 2) {
+				data[n] |= 0x01;
 				mask[n] |= 0x01;
 			}
 		}

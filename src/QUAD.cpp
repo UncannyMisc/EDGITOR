@@ -1,4 +1,4 @@
-#include "RECT.h"
+#include "QUAD.h"
 
 #include <algorithm>
 #include <limits>
@@ -10,28 +10,28 @@
 #include <SDL_rect.h>
 #endif
 
-/*static*/ RECT RECT::empty()
+/*static*/ QUAD QUAD::empty()
 {
 	using limits = std::numeric_limits<int>;
 
-	return RECT {
+	return QUAD {
 		limits::max(), limits::max(),
 		limits::min(), limits::min(),
 	};
 }
 
-/*static*/ RECT RECT::from_wh(int w, int h)
+/*static*/ QUAD QUAD::from_wh(int w, int h)
 {
 	return {0, 0, w, h};
 }
 
-/*static*/ RECT RECT::from_xywh(int x, int y, int w, int h)
+/*static*/ QUAD QUAD::from_xywh(int x, int y, int w, int h)
 {
 	return {x, y, x+w, y+h};
 }
 
 
-bool operator==(RECT const& lhs, RECT const& rhs)
+bool operator==(QUAD const& lhs, QUAD const& rhs)
 {
 	return lhs.left == rhs.left
 		&& lhs.top == rhs.top
@@ -39,30 +39,30 @@ bool operator==(RECT const& lhs, RECT const& rhs)
 		&& lhs.bottom == rhs.bottom;
 }
 
-bool operator!=(RECT const& lhs, RECT const& rhs)
+bool operator!=(QUAD const& lhs, QUAD const& rhs)
 {
 	return !(lhs == rhs);
 }
 
 
-bool RECT::is_empty() const
+bool QUAD::is_empty() const
 {
 	return this->left >= this->right
 		|| this->top >= this->bottom;
 }
 
-int RECT::width() const
+int QUAD::width() const
 {
 	return std::max(this->right - this->left, 0);
 }
 
-int RECT::height() const
+int QUAD::height() const
 {
 	return std::max(this->bottom - this->top, 0);
 }
 
 
-RECT RECT::include_region(RECT other) const
+QUAD QUAD::include_region(QUAD other) const
 {
 	return {
 		std::min(this->left, other.left),
@@ -72,7 +72,7 @@ RECT RECT::include_region(RECT other) const
 	};
 }
 
-RECT RECT::include_point(int x, int y) const
+QUAD QUAD::include_point(int x, int y) const
 {
 	return {
 		std::min(this->left, x),
@@ -82,7 +82,7 @@ RECT RECT::include_point(int x, int y) const
 	};
 }
 
-RECT RECT::clip_to(RECT boundary) const
+QUAD QUAD::clip_to(QUAD boundary) const
 {
 	return {
 		std::clamp(this->left, boundary.left, boundary.right),
@@ -92,7 +92,7 @@ RECT RECT::clip_to(RECT boundary) const
 	};
 }
 
-SDL_Rect RECT::to_sdl() const
+SDL_Rect QUAD::to_sdl() const
 {
 	return {
 		this->left, this->top,
@@ -102,7 +102,7 @@ SDL_Rect RECT::to_sdl() const
 
 
 
-RECT_ITERATOR& RECT_ITERATOR::operator++()
+QUAD_ITERATOR& QUAD_ITERATOR::operator++()
 {
 	this->xy.first++;
 	if (this->xy.first >= this->rect.right) {
@@ -113,41 +113,41 @@ RECT_ITERATOR& RECT_ITERATOR::operator++()
 	return *this;
 }
 
-RECT_ITERATOR RECT_ITERATOR::operator++(int)
+QUAD_ITERATOR QUAD_ITERATOR::operator++(int)
 {
 	auto copy = *this;
 	operator++();
 	return copy;
 }
 
-std::pair<int, int> const& RECT_ITERATOR::operator*() const
+std::pair<int, int> const& QUAD_ITERATOR::operator*() const
 {
 	return this->xy;
 }
 
-std::pair<int, int> const* RECT_ITERATOR::operator->() const
+std::pair<int, int> const* QUAD_ITERATOR::operator->() const
 {
 	return &this->xy;
 }
 
-bool operator==(RECT_ITERATOR const& lhs, RECT_ITERATOR const& rhs)
+bool operator==(QUAD_ITERATOR const& lhs, QUAD_ITERATOR const& rhs)
 {
 	return lhs.xy == rhs.xy
 		&& lhs.rect == rhs.rect;
 }
 
-bool operator!=(RECT_ITERATOR const& lhs, RECT_ITERATOR const& rhs)
+bool operator!=(QUAD_ITERATOR const& lhs, QUAD_ITERATOR const& rhs)
 {
 	return !(lhs == rhs);
 }
 
 
-RECT_ITERATOR begin(RECT rect)
+QUAD_ITERATOR begin(QUAD rect)
 {
 	return {rect, {rect.left, rect.top}};
 }
 
-RECT_ITERATOR end(RECT rect)
+QUAD_ITERATOR end(QUAD rect)
 {
 	return {rect, {rect.left, rect.bottom}};
 }

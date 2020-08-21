@@ -3,8 +3,12 @@
 // manpat: really not a fan of this - this should be cmakes job :(
 #ifdef __APPLE__
 #include <SDL2/SDL.h>
+#include <SDL2_image/SDL_image.h>
+#include <SDL2_ttf/SDL_ttf.h>
 #else
 #include <SDL.h>
+#include <SDL_image.h>
+#include <SDL_ttf.h>
 #endif
 
 #include "VARIABLES.h"
@@ -729,6 +733,20 @@ void uibox_add_element_button_files_open(UIBOX_INFO* uibox, uint16_t x, uint16_t
 	_element->text = text;
 	_element->sel_text = text;
 	_element->file = file;
+	_element->create(uibox);
+	uibox->element_list.push_back(std::move(_element));
+}
+
+void uibox_add_element_button_cube_face(UIBOX_INFO* uibox, uint16_t x, uint16_t y, int16_t w, int16_t h, std::string text, uint16_t file_n, uint16_t faces_n)
+{
+	if (x + text.size() > (uibox->chr_w - 1)) return;
+	std::shared_ptr<UIBOX_ELEMENT_BUTTON_CUBE_FACE> _element = std::make_shared<UIBOX_ELEMENT_BUTTON_CUBE_FACE>();
+	uibox_element_setxywh(uibox, _element, x, y, w, h, text, "");
+
+	_element->text = text;
+	_element->sel_text = text;
+	_element->file_n = file_n;
+	_element->faces_n = faces_n;
 	_element->create(uibox);
 	uibox->element_list.push_back(std::move(_element));
 }

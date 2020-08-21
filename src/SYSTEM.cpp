@@ -2,9 +2,13 @@
 #ifdef __APPLE__
 #include <SDL2/SDL.h>
 #include <SDL2_image/SDL_image.h>
+#include <SDL2_ttf/SDL_ttf.h>
 #else
 #include <SDL.h>
 #include <SDL_image.h>
+#include <SDL_ttf.h>
+//#include "SDL_opengl.h"
+//#include <gl/GLU.h>
 #endif
 
 #include "UI_CONTROL.h"
@@ -14,7 +18,8 @@
 #include "BRUSH.h"
 #include "UNDO.h"
 #include "COLOR.h"
-#include "RECT.h"
+#include "QUAD.h"
+#include "CUBE_VIEW.h"
 
 #include <algorithm>
 #include <filesystem>
@@ -32,6 +37,7 @@ UIBOX_INFO* UIBOX_FILE_EXPLORER;
 UIBOX_INFO* UIBOX_OPEN_FILES;
 UIBOX_INFO* UIBOX_CANVAS;
 UIBOX_INFO* UIBOX_FRAMES_LAYERS;
+UIBOX_INFO* UIBOX_CUBE_VIEW;
 
   //
  //   INITIALISATION   ///////////////////////////////////////////////// ///////  //////   /////    ////     ///      //       /
@@ -123,6 +129,14 @@ SDL_Window* INIT_WINDOW()
 	SDL_SetWindowPosition(WINDOW, WINDOW_X, WINDOW_Y);
 
 	SDL_SetWindowMinimumSize(WINDOW, 1168, 900);
+
+	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+	WINDOW_CUBE_VIEW = SDL_CreateWindow("EDGITOR CUBE VIEW", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 640, 640, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN | SDL_WINDOW_ALWAYS_ON_TOP);
+
+	CUBE_CONTEXT = SDL_GL_CreateContext(WINDOW_CUBE_VIEW);
+	SDL_GL_SetSwapInterval(2);
+	gluPerspective(77.7, 16 / 9, 0.01, 100.0);
+	glEnable(GL_DEPTH_TEST);
 
 	return WINDOW;
 }
@@ -218,6 +232,17 @@ SDL_Renderer* INIT_RENDERER(SDL_Window* WINDOW)
 	// BOXES
 	UIBOX_COLOR = uibox_new_color(0, 9999, 272, 400, 1, "COLOUR");
 	UIBOX_BRUSH = uibox_new(9999, 9999, 272, 400, 1, "BRUSH");
+	UIBOX_CUBE_VIEW = uibox_new((WINDOW_W / 2) - 256, (WINDOW_H / 2) - 128, 512, 256, 1, "CUBE VIEW");
+
+	uibox_add_element_button_cube_face(UIBOX_CUBE_VIEW, 2, 2, 0, 1, "FRONT FACE", 1, 0);
+	uibox_add_element_button_cube_face(UIBOX_CUBE_VIEW, 2, 3, 0, 1, "RIGHT FACE", 1, 1);
+	uibox_add_element_button_cube_face(UIBOX_CUBE_VIEW, 2, 4, 0, 1, "BACK FACE", 1, 2);
+	uibox_add_element_button_cube_face(UIBOX_CUBE_VIEW, 2, 5, 0, 1, "LEFT FACE", 1, 3);
+	uibox_add_element_button_cube_face(UIBOX_CUBE_VIEW, 2, 6, 0, 1, "TOP FACE", 1, 4);
+	uibox_add_element_button_cube_face(UIBOX_CUBE_VIEW, 2, 7, 0, 1, "BOTTOM FACE", 1, 5);
+
+	//uibox_add_element_var
+
 	//UIBOX_FILE_EXPLORER = uibox_new((WINDOW_W / 2) - 320, (WINDOW_H / 2) - 240, 640, 480, 1, "FILE EXPLORER");
 	UIBOX_FILE_EXPLORER = uibox_new_file_explorer(640 + FONT_CHRW*2, 0, 512, 500, 0, "FILE EXPLORER");
 	UIBOX_FILE_EXPLORER->snap = 1;
@@ -410,10 +435,13 @@ void SYSTEM_INPUT_UPDATE()
 	MOUSE_X = (DISPLAY_MOUSE_X - WINDOW_X);
 	MOUSE_Y = (DISPLAY_MOUSE_Y - WINDOW_Y);
 
-	CANVAS_MOUSE_PREVX = CANVAS_MOUSE_X;
-	CANVAS_MOUSE_PREVY = CANVAS_MOUSE_Y;
+	CANVAS_MOUSE_PREVX = CANVAS_MOUSE_X;//((MODE_TILEX) ? ((CANVAS_MOUSE_X + (CELL_W * 10)) % CELL_W) : CANVAS_MOUSE_X);
+	CANVAS_MOUSE_PREVY = CANVAS_MOUSE_Y;//((MODE_TILEY) ? ((CANVAS_MOUSE_Y + (CELL_H * 10)) % CELL_H) : CANVAS_MOUSE_Y);
 	double t_CANVAS_MOUSE_X = ((double)(((double)MOUSE_X / (double)CANVAS_ZOOM) - ((double)CANVAS_X / (double)CANVAS_ZOOM)));
 	double t_CANVAS_MOUSE_Y = ((double)(((double)MOUSE_Y / (double)CANVAS_ZOOM) - ((double)CANVAS_Y / (double)CANVAS_ZOOM)));
+
+	//if (MODE_TILEX) t_CANVAS_MOUSE_X = (((int16_t)floor(t_CANVAS_MOUSE_X) + (CELL_W * 10)) % CELL_W);
+	//if (MODE_TILEY) t_CANVAS_MOUSE_Y = (((int16_t)floor(t_CANVAS_MOUSE_Y) + (CELL_H * 10)) % CELL_H);
 
 	CANVAS_MOUSE_X = (int16_t)floor(t_CANVAS_MOUSE_X);
 	CANVAS_MOUSE_Y = (int16_t)floor(t_CANVAS_MOUSE_Y);
@@ -763,6 +791,15 @@ void SYSTEM_INPUT_UPDATE()
 			case TOOL::ERASER:
 			case TOOL::BRUSH:
 				//if (KEYBOARD_ALT) BRUSH_COLOR = get_pixel_layer(CANVAS_MOUSE_X, CANVAS_MOUSE_Y, CURRENT_LAYER); else
+
+				int16_t mx, my, mpx, mpy;
+
+				mx = abs(abs(CANVAS_MOUSE_X + 160) % 16);
+				my = abs(abs(CANVAS_MOUSE_Y + 160) % 16);
+				mpx = abs(abs(CANVAS_MOUSE_PREVX + 160) % 16);
+				mpy = abs(abs(CANVAS_MOUSE_PREVY + 160) % 16);
+
+				//set_pixel_line(mpx, mpy, mx, my, CURRENT_TOOL ? UNDO_COLOR : BRUSH_COLOR);
 				set_pixel_line(CANVAS_MOUSE_PREVX, CANVAS_MOUSE_PREVY, CANVAS_MOUSE_X, CANVAS_MOUSE_Y, CURRENT_TOOL ? UNDO_COLOR : BRUSH_COLOR);
 				break;
 
@@ -842,8 +879,8 @@ void SYSTEM_BRUSH_UPDATE()
 			// this is because a complex shape might be drawn in one tick; like floodfill
 	if (BRUSH_UPDATE) {
 		// make sure the brush_update isn't beyond the canvas
-		RECT const canvas_rect = RECT::from_wh(CANVAS_W, CANVAS_H);
-		RECT const clipped_brush_update_region = BRUSH_UPDATE_REGION.clip_to(canvas_rect);
+		QUAD const canvas_rect = QUAD::from_wh(CANVAS_W, CANVAS_H);
+		QUAD const clipped_brush_update_region = BRUSH_UPDATE_REGION.clip_to(canvas_rect);
 
 		// update the brush texture
 		SDL_Rect const brush_update_region_sdl = clipped_brush_update_region.to_sdl();
@@ -857,7 +894,7 @@ void SYSTEM_BRUSH_UPDATE()
 		LAYER_UPDATE_REGION = LAYER_UPDATE_REGION.include_region(clipped_brush_update_region);
 
 		// reset the brush bounds with every tick
-		BRUSH_UPDATE_REGION = RECT::empty();
+		BRUSH_UPDATE_REGION = QUAD::empty();
 	}
 }
 
@@ -924,7 +961,7 @@ void SYSTEM_LAYER_UPDATE()
 
 		if (LAYER_UPDATE == 0)
 		{
-			LAYER_UPDATE_REGION = RECT::empty();
+			LAYER_UPDATE_REGION = QUAD::empty();
 			LAYER_UPDATE = -1;
 		}
 	}
@@ -940,11 +977,11 @@ void SYSTEM_CANVAS_UPDATE()
 
 	if (!UNDO_UPDATE_REGION.is_empty())
 	{
-		auto const canvas_rect = RECT::from_wh(CANVAS_W, CANVAS_H);
+		auto const canvas_rect = QUAD::from_wh(CANVAS_W, CANVAS_H);
 		auto const sdl_rect = UNDO_UPDATE_REGION.clip_to(canvas_rect).to_sdl();
 		auto const layer = CURRENT_LAYER_PTR;
 		auto const update_start_index = sdl_rect.y * CANVAS_W + sdl_rect.x;
-		UNDO_UPDATE_REGION = RECT::empty();
+		UNDO_UPDATE_REGION = QUAD::empty();
 
 		SDL_SetTextureBlendMode(layer->texture, SDL_BLENDMODE_NONE);
 		SDL_UpdateTexture(layer->texture, &sdl_rect, &layer->pixels[update_start_index], CANVAS_PITCH);
