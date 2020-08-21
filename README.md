@@ -3,9 +3,10 @@
 
 - - - - - - -
 [<img align="center" alt="Discord" src="https://img.shields.io/discord/732380484956586035?color=FF0040&label=chat&logo=discord&logoColor=FFFFFF">](https://discord.gg/hrtrV2x)
-<img alt="Downloads" src="https://img.shields.io/github/downloads/ENDESGA/EDGITOR/total?color=FF0040">
-<img alt="License" src="https://img.shields.io/github/license/ENDESGA/EDGITOR?color=FF0040">
-<img alt="Size" src="https://img.shields.io/github/languages/code-size/ENDESGA/EDGITOR?color=FF0040">
+[<img alt="Downloads" src="https://img.shields.io/github/downloads/ENDESGA/EDGITOR/total?color=FF0040">](https://github.com/ENDESGA/EDGITOR)
+[<img alt="Release" src="https://img.shields.io/github/v/release/ENDESGA/EDGITOR?include_prereleases?color=FF0040">](https://github.com/ENDESGA/EDGITOR/releases)
+[<img alt="License" src="https://img.shields.io/github/license/ENDESGA/EDGITOR?color=FF0040">](https://github.com/ENDESGA/EDGITOR)
+[<img alt="Size" src="https://img.shields.io/github/languages/code-size/ENDESGA/EDGITOR?color=FF0040">](https://github.com/ENDESGA/EDGITOR)
 
 ## minimal C++ pixelart editor
 EDGITOR was designed to be extremely concise and clean from the ground up. It uses SDL2 as the core of its rendering system, and is designed to be as efficient as possible. EDGITOR can theoretically support colossal canvases (stress tests got close to 20Kx20K), but that isn't a focused feature since this is a pixelart editor. That being said, this could branch off to support AA and Photoshop-like features to bridge a gap between traditional painting and pixelart.
