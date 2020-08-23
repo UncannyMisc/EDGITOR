@@ -8,12 +8,9 @@ include(FindPkgConfig)
 
 project(EDGITOR)
 
-set(SOURCE_DIR "${PROJECT_SOURCE_DIR}/src/")
-set(RESOURCES_PATH "${PROJECT_SOURCE_DIR}/resources/")
-
 file(GLOB SOURCE
-	${SOURCE_DIR}/*.cpp
-	${SOURCE_DIR}/*.h
+	${PROJECT_SOURCE_DIR}/src/*.cpp
+	${PROJECT_SOURCE_DIR}/src/*.h
 )
 
 add_executable(${PROJECT_NAME} ${SOURCE})
@@ -56,7 +53,15 @@ elseif(WIN32)
 		include_directories(${PROJECT_NAME} "${CMAKE_BINARY_DIR}/packages/sdl2.nuget.${SDL_VER}/build/native/include")
 		include_directories(${PROJECT_NAME} "${CMAKE_BINARY_DIR}/packages/sdl2_ttf.nuget.${SDL_ttf_VER}/build/native/include")
 		include_directories(${PROJECT_NAME} "${CMAKE_BINARY_DIR}/packages/sdl2_image.nuget.${SDL_image_VER}/build/native/include")
-		target_link_libraries(${PROJECT_NAME} "${SDL2_LIB_PATH}/SDL2.lib;${SDL2_LIB_PATH}/SDL2main.lib;${SDL2_ttf_LIB_PATH}/SDL2_ttf.lib;${SDL2_image_LIB_PATH}/SDL2_image.lib")
+		
+		target_link_libraries(${PROJECT_NAME}
+			"${SDL2_LIB_PATH}/SDL2.lib"
+			"${SDL2_LIB_PATH}/SDL2main.lib"
+			"${SDL2_ttf_LIB_PATH}/SDL2_ttf.lib"
+			"${SDL2_image_LIB_PATH}/SDL2_image.lib"
+			"glu32.lib;opengl32.lib;")
+		
+		file(RENAME "${PROJECT_SOURCE_DIR}/resources/" "${CMAKE_CURRENT_BINARY_DIR}/resources/")
 		
 		configure_file("${CMAKE_BINARY_DIR}/packages/sdl2.nuget.redist.${SDL_VER}/build/native/bin/x64/dynamic/SDL2.dll"
 			"${CMAKE_BINARY_DIR}/Debug/SDL2.dll" COPYONLY)
@@ -83,4 +88,3 @@ elseif(PKG_CONFIG_FOUND)
 	target_link_libraries(${PROJECT_NAME} ${SDL2_LIBRARIES})
 endif()
 
-target_compile_definitions(${PROJECT_NAME} PRIVATE RESOURCES_PATH="${RESOURCES_PATH}")
