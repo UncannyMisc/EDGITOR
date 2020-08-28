@@ -53,7 +53,7 @@ file(GLOB SOURCE
 add_executable(${PROJECT_NAME} ${SOURCE})
 
 if(UNIX)
-	target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra)
+	target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -lstdc++fs)
 elseif(MSVC)
 	target_compile_options(${PROJECT_NAME} PRIVATE /W4 /permissive-)
 endif()
