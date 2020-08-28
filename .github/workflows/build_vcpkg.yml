@@ -93,6 +93,6 @@ jobs:
           buildDirectory: '${{ runner.workspace }}/b/ninja-bash/'
           useShell: bash
       - name: Install with CMake
-          run: |
-            mkdir release
-            cmake --prefix ./release --install
+        run: |
+          mkdir release
+          cmake --prefix ./release --install
