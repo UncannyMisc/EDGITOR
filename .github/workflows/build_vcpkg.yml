@@ -95,4 +95,4 @@ jobs:
       - name: Install with CMake
         run: |
           mkdir release
-          cmake --prefix ./release --install
+          cmake --install ${{ runner.workspace }}/b/ninja/ --prefix ./release
