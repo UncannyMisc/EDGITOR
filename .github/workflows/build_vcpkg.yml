@@ -11,7 +11,7 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
         include:
           - os: windows-latest
-            triplet: x64-windows
+            triplet: x64-windows-static
             vcpkgCommitId: '8a9a97315aefb3f8bc5d81bf66ca0025938b9c91'
             vcpkgPackages: 'sdl2 sdl2-image sdl2-ttf'
             osDependenciesCommand: |
@@ -106,7 +106,7 @@ jobs:
       # Uploads the zip as a build artifact
       - uses: actions/upload-artifact@v2
         with:
-          name: build
+          name: build-${{ matrix.triplet }}
           path: EDGITOR.zip
       # Creates and uploads a release if the push is tagged
       - name: Create Release
