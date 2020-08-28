@@ -14,21 +14,31 @@ jobs:
             triplet: x64-windows
             vcpkgCommitId: '8a9a97315aefb3f8bc5d81bf66ca0025938b9c91'
             vcpkgPackages: 'sdl2 sdl2-image sdl2-ttf'
+            osDependenciesCommand: |
+              choco install ninja
+              choco install git.install --params "/GitAndUnixToolsOnPath"
           - os: ubuntu-latest
             triplet: x64-linux
             vcpkgCommitId: '8a9a97315aefb3f8bc5d81bf66ca0025938b9c91'
             vcpkgPackages: 'sdl2 sdl2-image sdl2-ttf'
+            osDependenciesCommand: |
+              sudo apt-get install ninja-build -y
+              sudo apt-get install xorg-dev
+              sudo apt-get install freeglut3-dev
           - os: macos-latest
             triplet: x64-osx
             vcpkgCommitId: '8a9a97315aefb3f8bc5d81bf66ca0025938b9c91'
             vcpkgPackages: 'sdl2 sdl2-image sdl2-ttf'
+            osDependenciesCommand: brew install ninja
 
     steps:
       # Checkout the git repository
       - uses: actions/checkout@v1
         with:
           submodules: true
-
+      # Install system dependencies
+      - name: install dependencies
+        run: '${{ matrix.osDependenciesCommand }}'
       - uses: lukka/get-cmake@latest
       - name: dir
         run: find $RUNNER_WORKSPACE
