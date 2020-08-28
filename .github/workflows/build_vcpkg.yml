@@ -107,7 +107,7 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           name: build-${{ matrix.triplet }}
-          path: EDGITOR.zip
+          path: release/
       # Creates and uploads a release if the push is tagged
       - name: Create Release
         # Only run if push is tagged
