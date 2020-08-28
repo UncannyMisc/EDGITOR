@@ -17,20 +17,21 @@ jobs:
             osDependenciesCommand: |
               choco install ninja
               choco install git.install --params "/GitAndUnixToolsOnPath"
-          - os: ubuntu-latest
-            triplet: x64-linux
-            vcpkgCommitId: '8a9a97315aefb3f8bc5d81bf66ca0025938b9c91'
-            vcpkgPackages: 'sdl2 sdl2-image sdl2-ttf'
-            osDependenciesCommand: |
-              sudo apt-get install ninja-build -y
-              sudo apt-get install xorg-dev
-              sudo apt-get install freeglut3-dev
-              sudo apt-get install libgl1-mesa-dev libglu1-mesa-dev
-          - os: macos-latest
-            triplet: x64-osx
-            vcpkgCommitId: '8a9a97315aefb3f8bc5d81bf66ca0025938b9c91'
-            vcpkgPackages: 'sdl2 sdl2-image sdl2-ttf'
-            osDependenciesCommand: brew install ninja
+          # TODO: Linux is having download errors and Mac is outright failing to find SDL2_image
+#          - os: ubuntu-latest
+#            triplet: x64-linux
+#            vcpkgCommitId: '8a9a97315aefb3f8bc5d81bf66ca0025938b9c91'
+#            vcpkgPackages: 'sdl2 sdl2-image sdl2-ttf'
+#            osDependenciesCommand: |
+#              sudo apt-get install ninja-build -y
+#              sudo apt-get install xorg-dev
+#              sudo apt-get install freeglut3-dev
+#              sudo apt-get install libgl1-mesa-dev libglu1-mesa-dev
+#          - os: macos-latest
+#            triplet: x64-osx
+#            vcpkgCommitId: '8a9a97315aefb3f8bc5d81bf66ca0025938b9c91'
+#            vcpkgPackages: 'sdl2 sdl2-image sdl2-ttf'
+#            osDependenciesCommand: brew install ninja
 
     steps:
       # Checkout the git repository
