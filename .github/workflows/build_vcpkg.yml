@@ -106,7 +106,7 @@ jobs:
       # Uploads the zip as a build artifact
       - uses: actions/upload-artifact@v2
         with:
-          name: build-${{ matrix.triplet }}
+          name: edgitor-${{ matrix.triplet }}
           path: release/
       # Creates and uploads a release if the push is tagged
       - name: Create Release
@@ -131,5 +131,5 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
           asset_path: EDGITOR.zip
-          asset_name: EDGITOR-'${{ matrix.triplet }}'.zip
+          asset_name: EDGITOR-'${{ matrix.triplet }}'-${{ github.ref }}.zip
           asset_content_type: application/zip
