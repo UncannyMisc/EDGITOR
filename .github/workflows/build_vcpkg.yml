@@ -98,8 +98,8 @@ jobs:
           mkdir release
           cmake --install ${{ runner.workspace }}/b/ninja/ --prefix ./release
       - name: Compress build
-          run: |
-            zip -r EDGITOR.zip ./release
+        run: |
+          zip -r EDGITOR.zip ./release
       # Uploads the zip as a build artifact
       - uses: actions/upload-artifact@v2
         with:
