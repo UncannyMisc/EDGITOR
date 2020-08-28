@@ -92,7 +92,41 @@ jobs:
           vcpkgTriplet: ${{ steps.runvcpkg.outputs.RUNVCPKG_VCPKG_TRIPLET_OUT }}
           buildDirectory: '${{ runner.workspace }}/b/ninja-bash/'
           useShell: bash
+      # Collects all project binary and resources into a single folder
       - name: Install with CMake
         run: |
           mkdir release
           cmake --install ${{ runner.workspace }}/b/ninja/ --prefix ./release
+      - name: Compress build
+          run: |
+            zip -r EDGITOR.zip ./release
+      # Uploads the zip as a build artifact
+      - uses: actions/upload-artifact@v2
+        with:
+          name: build
+          path: EDGITOR.zip
+      # Creates and uploads a release if the push is tagged
+      - name: Create Release
+        # Only run if push is tagged
+        if: startsWith(github.ref, 'refs/tags/')
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+      - name: Upload Release Asset
+        # Only run if push is tagged
+        if: startsWith(github.ref, 'refs/tags/')
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          asset_path: EDGITOR.zip
+          asset_name: EDGITOR-'${{ matrix.triplet }}'.zip
+          asset_content_type: application/zip
