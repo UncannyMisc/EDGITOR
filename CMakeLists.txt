@@ -53,7 +53,7 @@ file(GLOB SOURCE
 add_executable(${PROJECT_NAME} ${SOURCE})
 
 if(UNIX)
-	target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra)
+	target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -lstdc++fs)
 elseif(MSVC)
 	target_compile_options(${PROJECT_NAME} PRIVATE /W4 /permissive-)
 endif()
@@ -79,3 +79,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2_ttf)
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
 		COMMAND ${CMAKE_COMMAND} -E copy_directory
 		${CMAKE_SOURCE_DIR}/resources/ $<TARGET_FILE_DIR:${PROJECT_NAME}>/resources/)
+
+# Copies the exe and resources to the install directory when an install is ran
+install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION .)
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/resources DESTINATION .)
