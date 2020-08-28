@@ -164,3 +164,6 @@ UpgradeLog*.XML
 UpgradeLog*.htm
 ServiceFabricBackup/
 *.rptproj.bak
+
+# Ignore the boostrap tools directory
+bootstrap/
