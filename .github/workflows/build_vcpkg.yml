@@ -39,6 +39,7 @@ jobs:
       # Install system dependencies
       - name: install dependencies
         run: '${{ matrix.osDependenciesCommand }}'
+      # Fetch the cmake executable
       - uses: lukka/get-cmake@latest
       - name: dir
         run: find $RUNNER_WORKSPACE
@@ -91,3 +92,7 @@ jobs:
           vcpkgTriplet: ${{ steps.runvcpkg.outputs.RUNVCPKG_VCPKG_TRIPLET_OUT }}
           buildDirectory: '${{ runner.workspace }}/b/ninja-bash/'
           useShell: bash
+      - name: Install with CMake
+          run: |
+            mkdir release
+            cmake --prefix ./release --install
