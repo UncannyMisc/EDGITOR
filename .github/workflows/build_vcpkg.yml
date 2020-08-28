@@ -8,7 +8,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        # TODO: Linux is having download errors and Mac is outright failing to find SDL2_image
+        # os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [windows-latest]
         include:
           - os: windows-latest
             triplet: x64-windows-static
