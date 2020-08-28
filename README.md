@@ -27,21 +27,110 @@ EDGITOR is now open source, and I'd love for this to grow via the community! Fee
 Now you can use Cmake!
 
 ## BUILD INSTRUCTIONS
-### Windows
-- Install Visual Studio 2019 and Cmake
-- [Download Nuget.exe Here](https://dist.nuget.org/win-x86-commandline/latest/nuget.exe), and place it in `C:\Program Files\CMake\bin`
-- Open Command Prompt, and go to EDGITOR's folder: `cd *EDGITOR_FOLDER_LOCATION*`
-- Then execute this command `cmake -B build -G "Visual Studio 16 2019"`
-- Open VS19 and set EDGITOR as StartUp Project
 
-### macOS
-- Install Xcode and Cmake
-- Install SDL and SDL_ttf frameworks manually
-- Run following command in Terminal `cmake -B build -G Xcode`
+### Dependencies
 
-### Linux
-- Make sure you have your compiler of choice, Cmake and pkg-config installed
-- Install SDL and SDL_ttf
-- Run `cmake -B build .`
-- `cd` in the `build` directory and run `make`
+EDGITOR requires the following libraries (instructions on how to install are provided below):
+
+  * SDL2
+  * SDL2_image
+  * SDL2_ttf
+
+##### Windows
+
+On Windows you'll need to following dependencies for building EDGITOR:
+  * Git
+  * Visual Studio 2015 Update 3 or newer
+  * Cmake
+  
+##### MacOS
+
+On MacOS you'll need to following dependencies for building EDGITOR:
+  * Xcode
+  * Git
+  * Cmake
+
+##### Linux
+
+On Linux you'll need to following dependencies for building EDGITOR:
+  * GCC (or an equivalent Cmake support C++ compiler like clang)
+  * Git
+  * Cmake
+
+#### Installing Dependencies
+
+EDGITOR uses vcpkg for managing it's dependencies with optimal cross-platform support.
+
+To get started you'll need to either manually install vcpkg and set the VCPKG_ROOT environment variable to your vcpkg root, or run the bootstrap.bat/sh file in the root of the repository.
+
+##### Installing vcpkg automatically
+
+The repository contains a bootstrap script in the root that can be used to automatically fetch the necessary tools and dependencies for the project.
+
+What the boostrap script does:
+  * Creates a `/boostrap` directory in the repo
+  * Clones or pulls (updates) vcpkg in `/boostrap/vcpkg`
+  * Runs the vcpkg boostrap script to compile or update vcpkg
+  * Installs the necessary project dependencies
+
+To run the bootstrap script, open a command line or Powershell to the repository directory and run:
+```
+./bootstrap.bat
+```
+
+This may take 10-15 minutes on the first run as it installs vcpkg and then builds the dependencies. 
+
+> If you want to pull the latest version of vcpkg or any of the libraries, just re-run the bootstrap script and it'll update the vcpkg install.
+
+##### Installing vcpkg manually
+
+First you'll need to clone the vcpkg repository somewhere on your machine (I use `C:\bin\` for files like this - Keith).
+```
+git clone https://github.com/microsoft/vcpkg
+``` 
+
+Next you'll need to run vcpkg's bootstrap script which will build and initialize vcpkg.
+```
+.\vcpkg\bootstrap-vcpkg.bat
+```
+
+Now you should add the vcpkg directory to your system `PATH` so you can run the `vcpkg` command without needing to be in the vcpkg directory. You also need to set the `VCPKG_ROOT` system or user environment variable to the vcpkg installation directory.  
+
+Now you can install all the dependencies with the dependencies script:
+
+**Windows**
+```
+dependencies.bat
+```
+
+**Linux**
+```
+dependencies.sh
+```
+
+### Building
+
+#### Windows
+
+First you'll need to generate the Visual Studio project with cmake:
+```
+cmake -B build -G "Visual Studio 16 2019"
+```
+
+Now you can open the EDGITOR folder as a Visual Studio project and set `EDGITOR` as StartUp Project.
+
+#### macOS
+
+You can build the EDGITOR project using Xcode via cmake:
+```
+cmake -B build -G Xcode
+```
+
+#### Linux
+
+```
+cmake -B build .
+cd build
+make
+```
 

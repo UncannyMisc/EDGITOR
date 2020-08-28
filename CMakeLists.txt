@@ -1,10 +1,47 @@
-# CMAKE file for EDGITOR by Alepacho
+# CMAKE file for EDGITOR by Alepacho and keithcodes
 
 cmake_minimum_required(VERSION 3.15)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-include(FindPkgConfig)
+# Check if we should use vcpkg from the boostrap script
+if (EXISTS "${CMAKE_CURRENT_LIST_DIR}/bootstrap/vcpkg")
+	if (DEFINED ENV{VCPKG_ROOT})
+		message(WARNING "Overriding system-wide VCPKG_ROOT value with boostrap folder's vcpkg install")
+	endif()
+
+	set(ENV{VCPKG_ROOT} "${CMAKE_CURRENT_LIST_DIR}/bootstrap/vcpkg")
+endif()
+
+# Checks if vcpkg is installed, and if so sets the cmake toolchain file to the one provided by vcpkg
+if(DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+	set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
+	message(STATUS "Using vcpkg CMake toolchain at ${CMAKE_TOOLCHAIN_FILE}")
+elseif(NOT DEFINED ENV{VCPKG_ROOT})
+	message(WARNING "VCPKG_ROOT env variable not set, can't automatically determine vcpkg CMake toolchain file. You can ignore this if you're not using vcpkg for project libraries.")
+	message(WARNING "Either set the system environment variable VCPKG_ROOT to your vcpkg installation directory, or add the -DCMAKE_TOOLCHAIN_FILE=/my/vcpkg/dir variable to the CMake profile.")
+endif()
+
+# Check if vcpkg is enabled and sets the appropriate platform triplet
+if (DEFINED ENV{VCPKG_ROOT} AND DEFINED CMAKE_TOOLCHAIN_FILE)
+	if (NOT DEFINED VCPKG_TARGET_TRIPLET)
+		if (WIN32)
+			if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+				# Uses static libraries with debug symbols
+				set(VCPKG_TARGET_TRIPLET "x64-windows-static-md" CACHE STRING "")
+			else()
+				# Uses static libraries
+				set(VCPKG_TARGET_TRIPLET "x64-windows-static" CACHE STRING "")
+			endif()
+		elseif(UNIX)
+			set(VCPKG_TARGET_TRIPLET "x64-linux" CACHE STRING "")
+		else()
+			message(ERROR "Failed to determine appropriate VCPKG_TARGET_TRIPLET value for your platform, please set the VCPKG_TARGET_TRIPLET environment variables")
+		endif()
+	endif()
+
+	message(STATUS "Using vcpkg triplet toolchain ${VCPKG_TARGET_TRIPLET}")
+endif()
 
 project(EDGITOR)
 
@@ -21,70 +58,24 @@ elseif(MSVC)
 	target_compile_options(${PROJECT_NAME} PRIVATE /W4 /permissive-)
 endif()
 
-if(APPLE)
-	set(CMAKE_FIND_FRAMEWORK ONLY)
-	find_library(SDL2_LIBRARY SDL2)
-	find_library(SDL2_TTF_LIBRARY SDL2_ttf)
-	find_library(SDL2_IMAGE_LIBRARY SDL2_image)
+# Find the system OpenGL library
+find_package(OpenGL REQUIRED)
+include_directories(${OPENGL_INCLUDE_DIRS})
+target_link_libraries(${PROJECT_NAME} PRIVATE ${OPENGL_LIBRARIES})
 
-	target_link_libraries(${PROJECT_NAME} ${SDL2_LIBRARY} ${SDL2_TTF_LIBRARY} ${SDL2_IMAGE_LIBRARY})
-elseif(WIN32)
-	message("RESOURCE_PATH: " ${RESOURCE_PATH})
+# Find the SDL2 library from vcpkg
+find_package(SDL2 CONFIG REQUIRED)
+target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2main SDL2::SDL2-static)
 
-	find_program(NUGET nuget)
-	if(NOT NUGET)
-		message(FATAL "CMake could not find the nuget command line tool. Please install it!")
-	else()
-		set(SDL_VER "2.0.12")
-		set(SDL_ttf_VER "2.0.15")
-		set(SDL_image_VER "2.0.5")
-		
-		set(SDL2_LIB_PATH "${CMAKE_BINARY_DIR}/packages/sdl2.nuget.${SDL_VER}/build/native/lib/x64/dynamic")
-		set(SDL2_ttf_LIB_PATH "${CMAKE_BINARY_DIR}/packages/sdl2_ttf.nuget.${SDL_ttf_VER}/build/native/lib/x64/dynamic")
-		set(SDL2_image_LIB_PATH "${CMAKE_BINARY_DIR}/packages/sdl2_image.nuget.${SDL_image_VER}/build/native/lib/x64/dynamic")
-		
-		configure_file(packages.config packages.config COPYONLY)
-		
-		execute_process(COMMAND 
-			${NUGET} restore packages.config -SolutionDirectory ${CMAKE_BINARY_DIR}
-			WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-		)
+# Find the SDL2-image library from vcpkg
+find_package(sdl2-image CONFIG REQUIRED)
+target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2_image)
 
-		include_directories(${PROJECT_NAME} "${CMAKE_BINARY_DIR}/packages/sdl2.nuget.${SDL_VER}/build/native/include")
-		include_directories(${PROJECT_NAME} "${CMAKE_BINARY_DIR}/packages/sdl2_ttf.nuget.${SDL_ttf_VER}/build/native/include")
-		include_directories(${PROJECT_NAME} "${CMAKE_BINARY_DIR}/packages/sdl2_image.nuget.${SDL_image_VER}/build/native/include")
-		
-		target_link_libraries(${PROJECT_NAME}
-			"${SDL2_LIB_PATH}/SDL2.lib"
-			"${SDL2_LIB_PATH}/SDL2main.lib"
-			"${SDL2_ttf_LIB_PATH}/SDL2_ttf.lib"
-			"${SDL2_image_LIB_PATH}/SDL2_image.lib"
-			"glu32.lib;opengl32.lib;")
-		
-		file(RENAME "${PROJECT_SOURCE_DIR}/resources/" "${CMAKE_CURRENT_BINARY_DIR}/resources/")
-		
-		configure_file("${CMAKE_BINARY_DIR}/packages/sdl2.nuget.redist.${SDL_VER}/build/native/bin/x64/dynamic/SDL2.dll"
-			"${CMAKE_BINARY_DIR}/Debug/SDL2.dll" COPYONLY)
-		configure_file("${CMAKE_BINARY_DIR}/packages/sdl2_ttf.nuget.redist.${SDL_ttf_VER}/build/native/bin/x64/dynamic/SDL2_ttf.dll"
-			"${CMAKE_BINARY_DIR}/Debug/SDL2_ttf.dll" COPYONLY)
-		configure_file("${CMAKE_BINARY_DIR}/packages/sdl2_ttf.nuget.redist.${SDL_ttf_VER}/build/native/bin/x64/dynamic/libfreetype-6.dll"
-			"${CMAKE_BINARY_DIR}/Debug/libfreetype-6.dll" COPYONLY)
-		configure_file("${CMAKE_BINARY_DIR}/packages/sdl2_ttf.nuget.redist.${SDL_ttf_VER}/build/native/bin/x64/dynamic/zlib1.dll"
-			"${CMAKE_BINARY_DIR}/Debug/zlib1.dll" COPYONLY)
-		configure_file("${CMAKE_BINARY_DIR}/packages/sdl2_image.nuget.redist.${SDL_image_VER}/build/native/bin/x64/dynamic/SDL2_image.dll"
-			"${CMAKE_BINARY_DIR}/Debug/SDL2_image.dll" COPYONLY)
-		configure_file("${CMAKE_BINARY_DIR}/packages/sdl2_image.nuget.redist.${SDL_image_VER}/build/native/bin/x64/dynamic/libjpeg-9.dll"
-			"${CMAKE_BINARY_DIR}/Debug/libjpeg-9.dll" COPYONLY)
-		configure_file("${CMAKE_BINARY_DIR}/packages/sdl2_image.nuget.redist.${SDL_image_VER}/build/native/bin/x64/dynamic/libpng16-16.dll"
-			"${CMAKE_BINARY_DIR}/Debug/libpng16-16.dll" COPYONLY)
-		configure_file("${CMAKE_BINARY_DIR}/packages/sdl2_image.nuget.redist.${SDL_image_VER}/build/native/bin/x64/dynamic/libtiff-5.dll"
-			"${CMAKE_BINARY_DIR}/Debug/libtiff-5.dll" COPYONLY)
-		configure_file("${CMAKE_BINARY_DIR}/packages/sdl2_image.nuget.redist.${SDL_image_VER}/build/native/bin/x64/dynamic/libwebp-7.dll"
-			"${CMAKE_BINARY_DIR}/Debug/libwebp-7.dll" COPYONLY)
-	endif()
-elseif(PKG_CONFIG_FOUND)
-	pkg_check_modules(SDL2 REQUIRED sdl2 SDL2_ttf SDL2_image)
-	include_directories(${PROJECT_NAME} ${SDL2_INCLUDE_DIRS})
-	target_link_libraries(${PROJECT_NAME} ${SDL2_LIBRARIES})
-endif()
+# Find the SDL2-ttf library from vcpkg
+find_package(sdl2-ttf CONFIG REQUIRED)
+target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2_ttf)
 
+# Copy the resources folder into the build directory
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E copy_directory
+		${CMAKE_SOURCE_DIR}/resources/ $<TARGET_FILE_DIR:${PROJECT_NAME}>/resources/)
