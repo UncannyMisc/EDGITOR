@@ -1,10 +1,9 @@
 #pragma once
 
-#include <utility>
-#include <iterator>
+#include "MAIN_LIBRARIES.h"
+#include "GLOBAL_VARIABLES.h"
 
 struct SDL_Rect;
-
 
 struct [[nodiscard]] QUAD {
 	int left;

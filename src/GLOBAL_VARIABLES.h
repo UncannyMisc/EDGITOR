@@ -1,63 +1,79 @@
 ﻿#pragma once
 
-#include <cstdint>
-#include <memory>
-#include <string>
-#include <vector>
-#include <deque>
-#include <filesystem>
+#include "MAIN_LIBRARIES.h"
 
-struct SDL_Renderer;
-struct SDL_Texture;
-struct SDL_Cursor;
-struct SDL_Rect;
+extern bool QUIT;
+extern std::string EDGITOR_VERSION;
 
-// manpat: really not a fan of this - this should be cmakes job :(
-#ifdef __APPLE__
-#include <SDL2/SDL.h>
-#include <SDL2_image/SDL_image.h>
-#include <SDL2_ttf/SDL_ttf.h>
-#else
-#include <SDL.h>
-#include <SDL_image.h>
-#include <SDL_ttf.h>
-#endif
+extern SDL_Window* WINDOW_MAIN;
+extern SDL_Renderer* RENDERER_MAIN;
 
-#include "COLOR.h"
+enum FILE_TYPE {
+	EMPTY,
+	ALL,
+	PIXELS,
+	MAP,
+	TEXT,
 
-  //
- //   VARIABLES   ///////////////////////////////////////////////// ///////  //////   /////    ///     //      /
-//
+	//
 
-extern SDL_Renderer* RENDERER;
-extern SDL_Texture* FONTMAP;
+	UNSUPPORTED,
+};
 
+enum TOOL {
+	BRUSH,
+	ERASER,
+	PICKER,
+	FILL,
+	PAN,
+};
+
+extern char PATH_SEP;
+
+struct PATH_FILES_INFO {
+	std::filesystem::path path;
+	bool is_directory = false;
+	std::string ext = "";
+	std::string filename = "";
+};
+
+extern std::filesystem::path CURRENT_PATH;
+extern std::vector<PATH_FILES_INFO> CURRENT_PATH_FILES;
+
+//extern char KEY_TEXT[256];
+extern std::string KEY_TEXT;
+extern int KEY_TEXT_INT;
+
+extern int UIBOX_ELEMENT_TYPE;
+extern int8_t UIBOX_IN;
+
+extern int* UIBOX_INPUT_PTR_I;
+extern int UIBOX_INPUT_VALUE_I;
+extern uint8_t* UIBOX_INPUT_PTR_U8;
+extern uint8_t UIBOX_INPUT_VALUE_U8;
+extern uint16_t* UIBOX_INPUT_PTR_U16;
+extern uint16_t UIBOX_INPUT_VALUE_U16;
+
+extern FILE_TYPE NEW_FILE_TYPE;
+extern uint16_t NEW_FILE_PIXELS_CANVAS_W;
+extern uint16_t NEW_FILE_PIXELS_CANVAS_H;
+extern int PIXEL_BIT_DEPTH;
+
+extern SDL_Texture* FONTMAP[256];
+extern SDL_Texture* FONTMAP2;
 extern TTF_Font* FONT;
 extern uint16_t FONT_CHRW;
 extern uint16_t FONT_CHRH;
 
-extern bool QUIT;
-extern float FPS;
-
-extern std::string CURRENT_PATH;
-//extern std::string CURRENT_FILE;
-
-extern char KEY_TEXT[256];
-extern int* KEY_TEXT_HOLD;
-extern int KEY_TEXT_INT;
+extern int WINDOW_MAIN_X;
+extern int WINDOW_MAIN_Y;
+extern int WINDOW_MAIN_W;
+extern int WINDOW_MAIN_H;
 
 extern int16_t MOUSE_X;
 extern int16_t MOUSE_Y;
 extern int16_t MOUSE_PREVX;
 extern int16_t MOUSE_PREVY;
-
-extern int WINDOW_X;
-extern int WINDOW_Y;
-extern int WINDOW_W;
-extern int WINDOW_H;
-
-extern int DISPLAY_W;
-extern int DISPLAY_H;
 
 extern bool MOUSEBUTTON_LEFT;
 extern bool MOUSEBUTTON_PRESSED_LEFT;
@@ -74,26 +90,32 @@ extern bool KEYBOARD_SHIFT;
 extern bool KEYBOARD_PRESSED_SHIFT;
 extern bool KEYBOARD_ALT;
 extern bool KEYBOARD_PRESSED_ALT;
-
 extern bool KEYBOARD_SPACE;
 extern bool KEYBOARD_PRESSED_SPACE;
+extern bool KEYBOARD_ENTER;
+extern bool KEYBOARD_PRESSED_ENTER;
 extern bool KEYBOARD_ESC;
 extern bool KEYBOARD_PRESSED_ESC;
 
-// TOOL
-enum TOOL {
-	BRUSH,
-	ERASER,
-	PICKER,
-	FILL,
-	CANVAS,
-};
+extern bool MOUSEBUTTON_PREVLEFT;
+extern bool MOUSEBUTTON_PREVMIDDLE;
+extern bool MOUSEBUTTON_PREVRIGHT;
+extern int16_t MOUSEWHEEL_PREVX;
+extern int16_t MOUSEWHEEL_PREVY;
+extern bool KEYBOARD_PREVCTRL;
+extern bool KEYBOARD_PREVSHIFT;
+extern bool KEYBOARD_PREVALT;
+extern bool KEYBOARD_PREVSPACE;
+extern bool KEYBOARD_PREVENTER;
+extern bool KEYBOARD_PREVESC;
 
-extern uint16_t CURRENT_TOOL;
-extern uint16_t TEMP_CURRENT_TOOL;
+extern bool FUNCTION_UNDO;
+extern bool FUNCTION_REDO;
 
+extern int CURRENT_TOOL;
+extern int TEMP_CURRENT_TOOL;
 
-SDL_Cursor* create_system_cursor();
+//
 
 const uint8_t CHAR_NBSP = 0xffu; // no-break space
 #define STR_NBSP "\xff"

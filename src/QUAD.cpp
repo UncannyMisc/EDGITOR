@@ -1,33 +1,22 @@
+
 #include "QUAD.h"
-
-#include <algorithm>
-#include <limits>
-
-// manpat: really not a fan of this - this should be cmakes job :(
-#ifdef __APPLE__
-#include <SDL2/SDL_rect.h>
-#else
-#include <SDL_rect.h>
-#endif
 
 /*static*/ QUAD QUAD::empty()
 {
-	using limits = std::numeric_limits<int>;
-
-	return QUAD {
-		limits::max(), limits::max(),
-		limits::min(), limits::min(),
+	return QUAD{
+		INT_MAX, INT_MAX,
+		INT_MIN, INT_MIN,
 	};
 }
 
 /*static*/ QUAD QUAD::from_wh(int w, int h)
 {
-	return {0, 0, w, h};
+	return { 0, 0, w, h };
 }
 
 /*static*/ QUAD QUAD::from_xywh(int x, int y, int w, int h)
 {
-	return {x, y, x+w, y+h};
+	return { x, y, x + w, y + h };
 }
 
 
@@ -77,18 +66,18 @@ QUAD QUAD::include_point(int x, int y) const
 	return {
 		std::min(this->left, x),
 		std::min(this->top, y),
-		std::max(this->right, x+1),
-		std::max(this->bottom, y+1),
+		std::max(this->right, x + 1),
+		std::max(this->bottom, y + 1),
 	};
 }
 
 QUAD QUAD::clip_to(QUAD boundary) const
 {
 	return {
-		std::clamp(this->left, boundary.left, boundary.right),
-		std::clamp(this->top, boundary.top, boundary.bottom),
-		std::clamp(this->right, boundary.left, boundary.right),
-		std::clamp(this->bottom, boundary.top, boundary.bottom),
+		clamp(this->left, boundary.left, boundary.right),
+		clamp(this->top, boundary.top, boundary.bottom),
+		clamp(this->right, boundary.left, boundary.right),
+		clamp(this->bottom, boundary.top, boundary.bottom),
 	};
 }
 
@@ -144,10 +133,10 @@ bool operator!=(QUAD_ITERATOR const& lhs, QUAD_ITERATOR const& rhs)
 
 QUAD_ITERATOR begin(QUAD rect)
 {
-	return {rect, {rect.left, rect.top}};
+	return { rect, {rect.left, rect.top} };
 }
 
 QUAD_ITERATOR end(QUAD rect)
 {
-	return {rect, {rect.left, rect.bottom}};
+	return { rect, {rect.left, rect.bottom} };
 }
