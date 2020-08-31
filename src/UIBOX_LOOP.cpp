@@ -12,7 +12,7 @@ void UIBOX_INIT()
 	
 	// PIXELS
 	uibox_add_tools(0, 0, 160, 500, "TOOLS", FILE_TYPE::PIXELS);
-	uibox_add_color(0, 0, 512, 512, "COLOR", FILE_TYPE::PIXELS);
+	uibox_add_color(0, 9999, 512, 512, "COLOR", FILE_TYPE::PIXELS);
 }
 
 void UIBOX_LOOP()

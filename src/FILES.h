@@ -252,6 +252,7 @@ struct FILE_INFO_PIXELS : public FILE_INFO {
 		brush_update_stack.emplace(std::pair<uint32_t, COLOR>{pos, dest});
 
 		brush_update_region = brush_update_region.include_point(x, y);
+		layer_update = 2;
 	}
 
 	void set_pixel_erase(const uint32_t x, const uint32_t y, const COLOR c, COLOR* p)
@@ -267,7 +268,7 @@ struct FILE_INFO_PIXELS : public FILE_INFO {
 		brush_update_stack.emplace(std::pair<uint32_t, COLOR>{pos, dest});
 
 		brush_update_region = brush_update_region.include_point(x, y);
-
+		layer_update = 2;
 	}
 
 	void set_pixel_line(int32_t x0, int32_t y0, const int32_t x1, const int32_t y1, const COLOR c)
@@ -436,7 +437,7 @@ struct FILE_INFO_PIXELS : public FILE_INFO {
 	{
 		if (layer_update == 2)
 		{
-			if (!current_layer_ptr->texture && !brush_update_region.is_empty())
+			if (current_layer_ptr->texture && !brush_update_region.is_empty())
 			{
 				SDL_Rect const dirty_rect = brush_update_region.to_sdl();
 				int const dirty_region_start_index = brush_update_region.top * canvas_w + brush_update_region.left;

@@ -194,7 +194,9 @@ struct UIBOX_ELEMENT_CREATE_FILE : public UIBOX_ELEMENT_MAIN {
 		default:
 			break;
 		}
-		UIBOX_PTR_HOME->uibox_shrink();
+		if (!UIBOX_PTR_HOME->shrink) UIBOX_PTR_HOME->uibox_shrink();
+		if (!UIBOX_PTR_FILE_EXPLORER->shrink) UIBOX_PTR_FILE_EXPLORER->uibox_shrink();
+		if (!UIBOX_PTR_OPENED_FILES->shrink) UIBOX_PTR_OPENED_FILES->uibox_shrink();
 	}
 };
 
