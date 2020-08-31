@@ -7,7 +7,7 @@
 #include "plf_stack.h"
 
 struct LAYER_INFO_PIXELS {
-	SDL_Texture* texture;
+	SDL_Texture* texture = nullptr;
 	std::unique_ptr<COLOR[]> pixels;
 	int16_t x = 0;
 	int16_t y = 0;
@@ -15,7 +15,7 @@ struct LAYER_INFO_PIXELS {
 	int blendmode = SDL_BLENDMODE_BLEND; /* SDL_BlendMode */
 
 	~LAYER_INFO_PIXELS() {
-		SDL_DestroyTexture(texture);
+		if (!texture) SDL_DestroyTexture(texture);
 	}
 };
 
@@ -436,16 +436,19 @@ struct FILE_INFO_PIXELS : public FILE_INFO {
 	{
 		if (layer_update == 2)
 		{
-			SDL_Rect const dirty_rect = brush_update_region.to_sdl();
-			int const dirty_region_start_index = brush_update_region.top * canvas_w + brush_update_region.left;
-			SDL_UpdateTexture(current_layer_ptr->texture, &dirty_rect, &current_layer_ptr->pixels[dirty_region_start_index], canvas_pitch);
+			if (!current_layer_ptr->texture && !brush_update_region.is_empty())
+			{
+				SDL_Rect const dirty_rect = brush_update_region.to_sdl();
+				int const dirty_region_start_index = brush_update_region.top * canvas_w + brush_update_region.left;
+				SDL_UpdateTexture(current_layer_ptr->texture, &dirty_rect, &current_layer_ptr->pixels[dirty_region_start_index], canvas_pitch);
 
-			QUAD const canvas_rect = QUAD::from_wh(canvas_w, canvas_h);
-			QUAD const clipped_brush_update_region = brush_update_region.clip_to(canvas_rect);
+				QUAD const canvas_rect = QUAD::from_wh(canvas_w, canvas_h);
+				QUAD const clipped_brush_update_region = brush_update_region.clip_to(canvas_rect);
 
-			layer_update_region = layer_update_region.include_region(clipped_brush_update_region);
+				layer_update_region = layer_update_region.include_region(clipped_brush_update_region);
 
-			brush_update_region = QUAD::empty();
+				brush_update_region = QUAD::empty();
+			}
 			layer_update = 1;
 		}
 		else if (layer_update == 1)

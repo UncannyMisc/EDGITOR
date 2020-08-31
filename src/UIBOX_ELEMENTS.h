@@ -14,6 +14,7 @@ struct UIBOX_ELEMENT_MAIN {
 	bool prev_over = false;
 	bool const_update = false;
 	bool is_input = false;
+	bool hold = false;
 	COLOR bg_col = COL_BLACK;
 
 	UIBOX_INFO* parent_uibox;
@@ -69,10 +70,11 @@ template<typename T>
 struct UIBOX_ELEMENT_BUTTON : public UIBOX_ELEMENT_MAIN {
 	T* input_var = nullptr;
 	T button_var;
+	//COLOR col = COL_BGUPDATE;
 
 	void create(UIBOX_INFO* uibox) override
 	{
-		uibox_set_string(uibox, text, x, y, COL_BGUPDATE, true);
+		uibox_set_string(uibox, text, x, y, bg_col, true);
 	}
 
 	void set() override

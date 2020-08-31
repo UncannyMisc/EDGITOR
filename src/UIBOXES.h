@@ -114,6 +114,8 @@ struct UIBOX_INFO {
 
 	virtual void update_loop() {};
 
+	virtual void draw_loop() {};
+
 	virtual void init(uint16_t _x, uint16_t _y, uint16_t _w, uint16_t _h, std::string _t, int _f)
 	{
 		file_type = _f;
@@ -226,11 +228,45 @@ struct UIBOX_INFO_HOME : public UIBOX_INFO {
 	void update_loop() override;
 };
 
+struct UIBOX_INFO_COLOR : public UIBOX_INFO {
+
+	std::vector<COLOR> gradient_pixels = std::vector<COLOR>(256 * 256);
+	SDL_Texture* gradient;
+	vec3 box_xyz;
+	uint8_t box_x = 0;
+	uint8_t box_y = 0;
+	uint8_t box_z = 0;
+	uint8_t picker_type = 1;
+	COLOR new_col = COL_WHITE;
+
+	void topbar_init() override
+	{
+		gradient = SDL_CreateTexture(RENDERER_MAIN, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STATIC, 256, 256);
+
+		for (uint16_t j = 0; j < 256; j++)
+		for (uint16_t i = 0; i < 256; i++)
+		{
+			gradient_pixels[j * 256 + i] = hsv_to_rgb(0.5f, (float)i / 255.0f, 1.0f - ((float)j / 255.0f));
+		}
+
+		SDL_UpdateTexture(gradient, nullptr, &gradient_pixels[0], (sizeof(COLOR) * (uint32_t)256));
+
+		topbar_add_grab(chr_w - 7);
+		topbar_add_pin(3);
+		topbar_add_shrink(3);
+	}
+
+	void draw_loop() override;
+
+	void update_loop() override;
+};
+
 extern UIBOX_INFO* uibox_add(uint16_t _x, uint16_t _y, uint16_t _w, uint16_t _h, std::string title, int _file_type);
 extern UIBOX_INFO* uibox_add_tools(uint16_t _x, uint16_t _y, uint16_t _w, uint16_t _h, std::string title, int _file_type);
 extern UIBOX_INFO* uibox_add_file_explorer(uint16_t _x, uint16_t _y, uint16_t _w, uint16_t _h, std::string title, int _file_type);
 extern UIBOX_INFO* uibox_add_opened_files(uint16_t _x, uint16_t _y, uint16_t _w, uint16_t _h, std::string title, int _file_type);
 extern UIBOX_INFO* uibox_add_home(uint16_t _x, uint16_t _y, uint16_t _w, uint16_t _h, std::string title, int _file_type);
+extern UIBOX_INFO* uibox_add_color(uint16_t _x, uint16_t _y, uint16_t _w, uint16_t _h, std::string title, int _file_type);
 
 extern bool UIBOX_IN_CLICK;
 extern std::vector<std::unique_ptr<UIBOX_INFO>> UIBOXES;

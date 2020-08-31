@@ -28,3 +28,5 @@ extern COLOR COL_DKGRAY;
 extern COLOR COL_BLACK;
 
 extern COLOR blend_colors(const COLOR src_color, const COLOR dst_color);
+
+extern COLOR hsv_to_rgb(float h, float s, float v);

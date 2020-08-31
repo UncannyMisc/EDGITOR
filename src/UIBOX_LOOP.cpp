@@ -12,6 +12,7 @@ void UIBOX_INIT()
 	
 	// PIXELS
 	uibox_add_tools(0, 0, 160, 500, "TOOLS", FILE_TYPE::PIXELS);
+	uibox_add_color(0, 0, 512, 512, "COLOR", FILE_TYPE::PIXELS);
 }
 
 void UIBOX_LOOP()
@@ -208,7 +209,7 @@ void UIBOX_LOOP()
 
 						if (_t_over)
 						{
-							if (MOUSEBUTTON_PRESSED_LEFT)
+							if (MOUSEBUTTON_PRESSED_LEFT || (_element->hold && MOUSEBUTTON_LEFT))
 							{
 								//UIBOX_ELEMENT_CLICK = _element;
 								//std::cout << "          " << std::endl << UIBOX_ELEMENT_CLICK << std::endl;
@@ -217,14 +218,14 @@ void UIBOX_LOOP()
 							}
 						}
 						else
-							if (_element->is_input && _element == UIBOX_ELEMENT_CLICK && UIBOX_ELEMENT_TYPE >= 0)
+						if (_element->is_input && _element == UIBOX_ELEMENT_CLICK && UIBOX_ELEMENT_TYPE >= 0)
+						{
+							if (MOUSEBUTTON_PRESSED_LEFT)
 							{
-								if (MOUSEBUTTON_PRESSED_LEFT)
-								{
-									//confirm_input();
-									_element->set();
-								}
+								//confirm_input();
+								_element->set();
 							}
+						}
 
 						if (_element->prev_over != _t_over)
 						{
@@ -286,6 +287,8 @@ void UIBOX_LOOP()
 			SDL_SetTextureColorMod(*_tchr, 255, 255, 255);
 			SDL_RenderCopy(RENDERER_MAIN, *_tchr, NULL, &rect);
 		}
+
+		uibox->draw_loop();
 
 		SDL_SetRenderTarget(RENDERER_MAIN, nullptr);
 

@@ -22,3 +22,25 @@ COLOR blend_colors(const COLOR src_color, const COLOR dst_color) {
 		uint8_t(new_cola * 255.0f),
 	};
 }
+
+COLOR hsv_to_rgb(float h, float s, float v)
+{
+	float r = 0.0f, g = 0.0f, b = 0.0f;
+
+	float i = floor(h * 6);
+	float f = h * 6 - i;
+	float p = v * (1 - s);
+	float q = v * (1 - f * s);
+	float t = v * (1 - (1 - f) * s);
+
+	switch (((int)i) % 6) {
+	case 0: r = v, g = t, b = p; break;
+	case 1: r = q, g = v, b = p; break;
+	case 2: r = p, g = v, b = t; break;
+	case 3: r = p, g = q, b = v; break;
+	case 4: r = t, g = p, b = v; break;
+	case 5: r = v, g = p, b = q; break;
+	}
+
+	return COLOR{ (uint8_t)(r * 255), (uint8_t)(g * 255), (uint8_t)(b * 255), 255 };
+}

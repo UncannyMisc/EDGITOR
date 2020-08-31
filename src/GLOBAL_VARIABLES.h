@@ -8,6 +8,42 @@ extern std::string EDGITOR_VERSION;
 extern SDL_Window* WINDOW_MAIN;
 extern SDL_Renderer* RENDERER_MAIN;
 
+struct vec2 {
+	uint8_t x, y;
+
+	friend bool operator==(vec2 a, vec2 b) {
+		return a.x == b.x && a.y == b.y;
+	}
+
+	friend bool operator!=(vec2 a, vec2 b) {
+		return !(a == b);
+	}
+};
+
+struct vec3 {
+	uint8_t x, y, z;
+
+	friend bool operator==(vec3 a, vec3 b) {
+		return a.x == b.x && a.y == b.y && a.z == b.z;
+	}
+
+	friend bool operator!=(vec3 a, vec3 b) {
+		return !(a == b);
+	}
+};
+
+struct vec4 {
+	uint8_t x, y, z, w;
+
+	friend bool operator==(vec4 a, vec4 b) {
+		return a.x == b.x && a.y == b.y && a.z == b.z && a.w == b.w;
+	}
+
+	friend bool operator!=(vec4 a, vec4 b) {
+		return !(a == b);
+	}
+};
+
 enum FILE_TYPE {
 	EMPTY,
 	ALL,

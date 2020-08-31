@@ -361,6 +361,148 @@ UIBOX_INFO* uibox_add_home(uint16_t _x, uint16_t _y, uint16_t _w, uint16_t _h, s
 	return UIBOXES.back().get();
 }
 
+void UIBOX_INFO_COLOR::draw_loop()
+{
+	SDL_Rect _trect = { FONT_CHRW * 2,FONT_CHRH * 2,256,256 };
+	//SDL_RenderCopy(RENDERER_MAIN, gradient, nullptr, &_trect);
+}
+void UIBOX_INFO_COLOR::update_loop()
+{
+	COLOR _tcol;
+	uint8_t _w = 42;
+	uint8_t _h = 22;
+
+	for (uint8_t j = 0; j < _h; j++)
+	{
+		for (uint8_t i = 0; i < _w; i++)
+		{
+			if ((j > 0 && j < _h - 1) && (i > 0 && i < _w - 1))
+			{
+				continue;
+			}
+			chr_chr[(j + 3) * chr_w + (i + 1)] = (j == 0) ? ((i == 0) ? CHAR_LINETL : ((i == _w - 1) ? CHAR_LINETR : CHAR_LINEH)) :
+				((j == _h - 1) ? ((i == 0) ? CHAR_LINEBL : ((i == _w - 1) ? CHAR_LINEBR : CHAR_LINEH)) : CHAR_LINEV);
+		}
+	}
+
+	_w = 40;
+	_h = 20;
+
+	new_col = hsv_to_rgb((float)box_xyz.x / (float)(_w - 1), 1.0f - ((float)box_xyz.y / (float)(_h - 1)), (float)box_xyz.z / (_w - 1));
+	PRINT((int)new_col.r);
+	PRINT((int)new_col.g);
+	PRINT((int)new_col.b);
+	PRINT((int)new_col.a);
+	CURRENT_FILE_PTR_PIXELS->brush_color[CURRENT_FILE_PTR_PIXELS->current_brush_color] = new_col;
+
+	element_list.clear();
+
+	for (uint16_t x = 0; x < _w; x++)
+	{
+		for (uint16_t y = 0; y < _h; y++)
+		{
+			_tcol = hsv_to_rgb((float)x / (float)(_w - 1), 1.0f - ((float)y / (float)(_h - 1)), (float)box_z / (_w - 1));
+			uibox_element_add_button<vec3>(this, x + 2, y + 4, 1, 1, STR_NBSP, STR_NBSP,
+				&box_xyz, vec3{ (uint8_t)x, (uint8_t)y, box_z}, _tcol, 1);
+			auto _telement = element_list.back();
+			_telement->update_uibox = true;
+		}
+
+		uibox_element_add_button<uint8_t>(this, x + 2, 25, 1, 1, STR_NBSP, STR_NBSP, &box_z, (uint8_t)x, hsv_to_rgb(1.0f, 1.0f, (float)x / (float)(_w - 1)), 1);
+		auto _telement = element_list.back();
+		_telement->update_uibox = true;
+	}
+
+	/*switch (picker_type)
+	{
+	case 0:
+		new_col = hsv_to_rgb((float)box_xyza.x / (float)(w - 1), 1.0f - ((float)box_xyza.y / (float)(h - 1)), (float)box_xyza.z / (w - 1));
+		break;
+
+	case 1:
+		new_col = hsv_to_rgb((float)box_xyza.x / (float)(w - 1), (float)box_xyza.z / (w - 1), 1.0f - ((float)box_xyza.y / (float)(h - 1)));
+		break;
+
+	case 2:
+		new_col = hsv_to_rgb((float)box_xyza.z / (w - 1), (float)box_xyza.x / (float)(w - 1), 1.0f - ((float)box_xyza.y / (float)(h - 1)));
+		break;
+
+	default:
+		break;
+	}
+
+	new_col = hsv_to_rgb((float)box_xyza.x / (float)(w - 1), 1.0f - ((float)box_xyza.y / (float)(h - 1)), (float)box_xyza.z / (w - 1));
+
+	CURRENT_FILE_PTR_PIXELS->brush_color[CURRENT_FILE_PTR_PIXELS->current_brush_color] = new_col;
+
+	COLOR _tbrushcol = CURRENT_FILE_PTR_PIXELS->brush_color[CURRENT_FILE_PTR_PIXELS->current_brush_color];
+	uint8_t _talpha = _tbrushcol.a;
+
+	COLOR _tcol;
+	for (uint16_t x = 0; x < w; x++)
+	{
+		for (uint16_t y = 0; y < h; y++)
+		{
+			switch (picker_type)
+			{
+			case 0:
+				_tcol = hsv_to_rgb((float)x / (float)(w - 1), 1.0f - ((float)y / (float)(h - 1)), (float)box_z / (w - 1));
+				uibox_element_add_button<vec4>(this, x + 2, y + 3, 1, 1, STR_NBSP, STR_NBSP,
+					&box_xyza, vec4{(uint8_t)x, (uint8_t)y, box_z, _talpha}, _tcol, 1);
+				break;
+
+			case 1:
+				_tcol = hsv_to_rgb((float)x / (float)(w - 1), (float)box_z / (w - 1), 1.0f - ((float)y / (float)(h - 1)));
+				uibox_element_add_button<vec4>(this, x + 2, y + 3, 1, 1, STR_NBSP, STR_NBSP,
+					&box_xyza, vec4{ (uint8_t)x, box_z, (uint8_t)y, _talpha }, _tcol, 1);
+				break;
+
+			case 2:
+				_tcol = hsv_to_rgb((float)box_z / (w - 1), (float)x / (float)(w - 1), 1.0f - ((float)y / (float)(h - 1)));
+				uibox_element_add_button<vec4>(this, x + 2, y + 3, 1, 1, STR_NBSP, STR_NBSP,
+					&box_xyza, vec4{ box_z, (uint8_t)x, (uint8_t)y, _talpha }, _tcol, 1);
+				break;
+
+			default:
+				break;
+			}
+		}
+
+		//uibox_set_char(this, (23) * chr_w + (x + 2), CHAR_NBSP, hsv_to_rgb((float)x / (float)(w - 1), 1.0f, 1.0f), 1);
+
+		switch (picker_type)
+		{
+		case 0:
+			uibox_element_add_button<uint8_t>(this, x + 2, 24, 1, 1, STR_NBSP, STR_NBSP, &box_z, (uint8_t)x, hsv_to_rgb((float)x / (float)(w - 1), 1.0f, 1.0f), 1);
+			break;
+
+		case 1:
+			uibox_element_add_button<uint8_t>(this, x + 2, 24, 1, 1, STR_NBSP, STR_NBSP, &box_z, (uint8_t)x, hsv_to_rgb(1.0f, (float)x / (float)(w - 1), 1.0f), 1);
+			break;
+
+		case 2:
+			uibox_element_add_button<uint8_t>(this, x + 2, 24, 1, 1, STR_NBSP, STR_NBSP, &box_z, (uint8_t)x, hsv_to_rgb(1.0f, 1.0f, (float)x / (float)(w - 1)), 1);
+			break;
+
+		default:
+			break;
+		}
+
+		//uibox_element_add_button<uint8_t>(this, x + 2, 24, 1, 1, STR_NBSP, STR_NBSP, &box_n, (uint8_t)x, hsv_to_rgb((float)x / (float)(w - 1), 1.0f, 1.0f), 1);
+		auto _telement = element_list.back();
+		_telement->update_uibox = true;
+	}*/
+
+
+}
+UIBOX_INFO* uibox_add_color(uint16_t _x, uint16_t _y, uint16_t _w, uint16_t _h, std::string title, int _file_type)
+{
+	auto new_uibox = std::make_unique<UIBOX_INFO_COLOR>();
+	new_uibox->init(_x, _y, _w, _h, title, _file_type);
+	// add variables for element_loop()
+	UIBOXES.push_back(std::move(new_uibox));
+	return UIBOXES.back().get();
+}
 
 bool UIBOX_IN_CLICK = false;
 std::vector<std::unique_ptr<UIBOX_INFO>> UIBOXES;
