@@ -112,7 +112,11 @@ dependencies.sh
 
 #### Windows
 
-First you'll need to generate the Visual Studio project with cmake:
+First you'll need to generate the Visual Studio project with cmake either:
+```
+makesolution.bat
+```
+or, in a console opened to the edgitor directory:
 ```
 cmake -B build -G "Visual Studio 16 2019"
 ```
