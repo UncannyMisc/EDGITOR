@@ -5,6 +5,7 @@
 #include "FILES.h"
 
 #include "UIBOX_ELEMENTS.h"
+#include "CLIPBOARD.h"
 
 inline void EVENT_LOOP()
 {
@@ -22,6 +23,8 @@ inline void EVENT_LOOP()
 	KEYBOARD_PREVENTER = KEYBOARD_ENTER;
 	KEYBOARD_PREVESC = KEYBOARD_ESC;
 
+	KEYBOARD_PREVANY = KEYBOARD_ANY;
+
 	MOUSEBUTTON_PRESSED_LEFT = 0;
 	MOUSEBUTTON_PRESSED_MIDDLE = 0;
 	MOUSEBUTTON_PRESSED_RIGHT = 0;
@@ -31,6 +34,8 @@ inline void EVENT_LOOP()
 	KEYBOARD_PRESSED_SPACE = 0;
 	KEYBOARD_PRESSED_ENTER = 0;
 	KEYBOARD_PRESSED_ESC = 0;
+
+	KEYBOARD_PRESSED_ANY = 0;
 
 	FUNCTION_UNDO = false;
 	FUNCTION_REDO = false;
@@ -132,8 +137,14 @@ inline void EVENT_LOOP()
 			MOUSEWHEEL_Y = (int16_t)EVENT.wheel.y;
 			break;
 
-		case SDL_KEYDOWN:
+		case SDL_KEYDOWN: {
 			const auto keysym = EVENT.key.keysym;
+
+			KEYBOARD_ANY = 1;
+			KEYBOARD_PRESSED_ANY = 1;
+
+			if (keysym.scancode < 256) KEYSYM[keysym.scancode] = true;
+			//KEYSYM.push_back(keysym.sym);
 
 			if (keysym.sym == SDLK_LALT)
 			{
@@ -173,6 +184,7 @@ inline void EVENT_LOOP()
 					KEY_TEXT_UPDATE();
 				}
 			}
+
 			if (keysym.mod & KMOD_CTRL) {
 				switch (keysym.sym) {
 				case SDLK_z: {
@@ -188,26 +200,44 @@ inline void EVENT_LOOP()
 					break;
 				}
 				case SDLK_y: FUNCTION_REDO = true;  break;
-				/*case SDLK_s: {
-					SDL_Surface* _tsurf = SDL_CreateRGBSurfaceWithFormat(0, CANVAS_W, CANVAS_H, 32, SDL_PIXELFORMAT_RGBA32);
 
-					auto layer = CURRENT_FRAME_PTR->layers[0];
-					for (int i = 0; i < CANVAS_W * CANVAS_H; i++)
+				case SDLK_v:
+				{
+					if (keysym.mod & KMOD_CTRL) {
+						std::string file = "clipboard";
+						clipboard_to_file(file);
+						open_file(file);
+					}
+					else {
+						// paste as selection in current file
+					}
+					break;
+				}
+				case SDLK_s: {
+					SDL_Surface* _tsurf = SDL_CreateRGBSurfaceWithFormat(0, CURRENT_FILE_PTR_PIXELS->canvas_w, CURRENT_FILE_PTR_PIXELS->canvas_h, 32, SDL_PIXELFORMAT_RGBA32);
+
+					auto layer = CURRENT_FILE_PTR_PIXELS->current_layer_ptr;// CURRENT_FRAME_PTR->layers[0];
+					for (int i = 0; i < CURRENT_FILE_PTR_PIXELS->canvas_w * CURRENT_FILE_PTR_PIXELS->canvas_h; i++)
 					{
 						((COLOR*)_tsurf->pixels)[i] = layer->pixels[i]; // THERE ISN'T MULTI-LAYER BLENDING YET
 					}
-					std::string _tpath = CURRENT_FILE_PTR->path + CURRENT_FILE_PTR->filename;// (CURRENT_PATH + CURRENT_FILE);
+					std::string _tpath = CURRENT_FILE_PTR_PIXELS->filename;// (CURRENT_PATH + CURRENT_FILE);
 					IMG_SavePNG(_tsurf, _tpath.c_str());
 					SDL_FreeSurface(_tsurf);
 					break;
-				}*/
+				}
 				default: break;
 				}
 			}
-			break;
+		} break;
 
 		case SDL_KEYUP: {
 			const auto keysym = EVENT.key.keysym;
+
+			KEYBOARD_ANY = 0;
+			KEYBOARD_PRESSED_ANY = 0;
+
+			if (keysym.scancode < 256) KEYSYM[keysym.scancode] = false;
 
 			if (keysym.sym == SDLK_LALT)
 			{
@@ -243,9 +273,16 @@ inline void EVENT_LOOP()
 		}
 	}
 
-	//if (MOUSEBUTTON_PRESSED_RIGHT)
-	//{
+	/*if (MOUSEBUTTON_PRESSED_RIGHT)
+	{
 	//	add_file_pixels(FILE_TYPE::PIXELS, "", "untitled.png", NEW_FILE_PIXELS_CANVAS_W, NEW_FILE_PIXELS_CANVAS_H);
 		//SDL_UpdateTexture(CURRENT_FILE_PTR_PIXELS->current_layer_ptr->texture, NULL, &CURRENT_FILE_PTR_PIXELS->current_layer_ptr->pixels[0], CURRENT_FILE_PTR_PIXELS->canvas_pitch);
-	//}
+
+		std::string file = "clipboard";
+
+		clipboard_to_file(file);
+	
+		open_file(file);
+		PRINT("OPEN EXTERNAL FILE");
+	}*/
 }

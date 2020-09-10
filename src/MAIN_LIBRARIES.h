@@ -18,6 +18,7 @@
 #include <utility>
 #include <iterator>
 #include <limits>
+#include <fstream>
 
 #include "SYSTEM_FUNCTIONS.h"
 #include "COLOR.h"

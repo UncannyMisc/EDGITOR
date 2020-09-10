@@ -82,6 +82,12 @@ bool KEYBOARD_PREVSPACE = false;
 bool KEYBOARD_PREVENTER = false;
 bool KEYBOARD_PREVESC = false;
 
+bool KEYBOARD_ANY = false;
+bool KEYBOARD_PRESSED_ANY = false;
+bool KEYBOARD_PREVANY = false;
+
+std::vector<bool> KEYSYM;
+
 bool FUNCTION_UNDO = false;
 bool FUNCTION_REDO = false;
 

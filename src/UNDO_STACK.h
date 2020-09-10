@@ -20,6 +20,8 @@ struct UNDO_ENTRY_PIXELS
 		//, undo_pixels(1)
 		//, redo_pixels(1)
 	{
+		undo_pixels.reserve(256);
+		redo_pixels.reserve(256);
 	}
 
 	/*void set(uint16_t xx, uint16_t yy, COLOR prev_col, COLOR new_col)

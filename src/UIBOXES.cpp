@@ -46,6 +46,7 @@ void UIBOX_INFO_TOOLS::update_loop()
 	uibox_element_add_button<int>(this, 2, 4, 0, 1, "PICKER", "> PICKER", &CURRENT_TOOL, TOOL::PICKER);
 	uibox_element_add_button<int>(this, 2, 5, 0, 1, "FILL", "> FILL", &CURRENT_TOOL, TOOL::FILL);
 	uibox_element_add_button<int>(this, 2, 6, 0, 1, "PAN", "> PAN", &CURRENT_TOOL, TOOL::PAN);
+	uibox_element_add_button<int>(this, 2, 6, 0, 1, "SELECT", "> SELECT", &CURRENT_TOOL, TOOL::SELECT);
 }
 UIBOX_INFO* uibox_add_tools(uint16_t _x, uint16_t _y, uint16_t _w, uint16_t _h, std::string title, int _file_type)
 {

@@ -26,6 +26,9 @@ int main(int, char* [])
 
 	PRINT("EDGITOR :: VERSION: " + EDGITOR_VERSION);
 
+	//std::cout << (226 | (1 << 30)) << std::endl << std::endl; // 1073742050
+	//std::cout << (1073742050 >> 30) << std::endl << std::endl; // 1073742050
+
 	SDL_EventState(SDL_DROPFILE, SDL_ENABLE);
 
 	while (!QUIT)
@@ -37,7 +40,11 @@ int main(int, char* [])
 		SDL_SetRenderDrawColor(RENDERER_MAIN, 0, 0, 0, 255);
 		SDL_RenderClear(RENDERER_MAIN);
 
-		//if (CURRENT_FILE_PTR != nullptr) CURRENT_FILE_PTR->brush_update = 0;
+		KEYSYM.reserve(256);
+		for (int i = 0; i < 256; i++)
+		{
+			KEYSYM.push_back(false);
+		}
 
 		EVENT_LOOP();
 		/*INPUT_LOOP();
@@ -62,6 +69,60 @@ int main(int, char* [])
 		}
 
 		UIBOX_LOOP();
+
+		SDL_SetRenderDrawColor(RENDERER_MAIN, 255, 255, 255, 255);
+		static const auto blend_invert = SDL_ComposeCustomBlendMode(SDL_BLENDFACTOR_ONE_MINUS_DST_COLOR, SDL_BLENDFACTOR_ZERO, SDL_BLENDOPERATION_ADD, SDL_BLENDFACTOR_ONE, SDL_BLENDFACTOR_ZERO, SDL_BLENDOPERATION_ADD);
+		SDL_SetRenderDrawBlendMode(RENDERER_MAIN, blend_invert);
+		//SDL_SetRenderDrawBlendMode(RENDERER_MAIN, SDL_BLENDMODE_ADD);
+
+		SDL_RenderDrawLine(RENDERER_MAIN, MOUSE_X - 3, MOUSE_Y - 4, MOUSE_X + 4, MOUSE_Y + 3);
+		SDL_RenderDrawLine(RENDERER_MAIN, MOUSE_X - 4, MOUSE_Y - 4, MOUSE_X + 4, MOUSE_Y + 4);
+		SDL_RenderDrawLine(RENDERER_MAIN, MOUSE_X - 4, MOUSE_Y - 3, MOUSE_X + 3, MOUSE_Y + 4);
+		SDL_RenderDrawLine(RENDERER_MAIN, MOUSE_X + 4, MOUSE_Y - 3, MOUSE_X - 3, MOUSE_Y + 4);
+		SDL_RenderDrawLine(RENDERER_MAIN, MOUSE_X + 4, MOUSE_Y - 4, MOUSE_X - 4, MOUSE_Y + 4);
+		SDL_RenderDrawLine(RENDERER_MAIN, MOUSE_X + 3, MOUSE_Y - 4, MOUSE_X - 4, MOUSE_Y + 3);
+
+
+
+		/*SDL_SetRenderDrawColor(RENDERER_MAIN, 255, 255, 255, 255);
+		static auto blend_mask = SDL_ComposeCustomBlendMode(SDL_BLENDFACTOR_ZERO, SDL_BLENDFACTOR_ONE, SDL_BLENDOPERATION_ADD, SDL_BLENDFACTOR_ZERO, SDL_BLENDFACTOR_ZERO, SDL_BLENDOPERATION_ADD);
+		SDL_SetRenderDrawBlendMode(RENDERER_MAIN, blend_mask);
+		
+		SDL_Rect _trect = { 0,0,WINDOW_MAIN_W,WINDOW_MAIN_H };
+		SDL_RenderFillRect(RENDERER_MAIN, &_trect);
+
+		static auto blend_mask2 = SDL_ComposeCustomBlendMode(SDL_BLENDFACTOR_ZERO, SDL_BLENDFACTOR_ONE, SDL_BLENDOPERATION_ADD, SDL_BLENDFACTOR_ONE, SDL_BLENDFACTOR_ZERO, SDL_BLENDOPERATION_ADD);
+		SDL_SetRenderDrawBlendMode(RENDERER_MAIN, blend_mask2);
+
+		_trect = { 400,500,700,600 };
+		SDL_RenderFillRect(RENDERER_MAIN, &_trect);
+
+		static auto blend_mask3 = SDL_ComposeCustomBlendMode(SDL_BLENDFACTOR_DST_ALPHA, SDL_BLENDFACTOR_ZERO, SDL_BLENDOPERATION_ADD, SDL_BLENDFACTOR_ONE, SDL_BLENDFACTOR_ZERO, SDL_BLENDOPERATION_ADD);
+		SDL_SetRenderDrawBlendMode(RENDERER_MAIN, blend_mask3);
+
+		SDL_SetRenderDrawColor(RENDERER_MAIN, 255, 0, 64, 255);
+		SDL_RenderDrawLine(RENDERER_MAIN, 0, MOUSE_Y, WINDOW_MAIN_W, MOUSE_Y);*/
+
+		/*SDL_SetRenderDrawColor(RENDERER_MAIN, 255, 255, 255, 255);
+
+		_trect = {400,500,700,600};
+		SDL_RenderFillRect(RENDERER_MAIN, &_trect);
+
+		SDL_SetRenderDrawColor(RENDERER_MAIN, 0, 0, 0, 0);
+
+		_trect = { 404,504,700 - 8,600 -8 };
+		SDL_RenderFillRect(RENDERER_MAIN, &_trect);*/
+
+		/*static auto blend_mask2 = SDL_ComposeCustomBlendMode(SDL_BLENDFACTOR_DST_ALPHA, SDL_BLENDFACTOR_ZERO, SDL_BLENDOPERATION_ADD, SDL_BLENDFACTOR_ZERO, SDL_BLENDFACTOR_ONE, SDL_BLENDOPERATION_ADD);
+		SDL_SetRenderDrawBlendMode(RENDERER_MAIN, blend_mask2);
+		SDL_SetRenderDrawColor(RENDERER_MAIN, 255, 0, 64, 255);
+
+		SDL_RenderDrawLine(RENDERER_MAIN, 0, MOUSE_Y, WINDOW_MAIN_W, MOUSE_Y);*/
+
+		SDL_SetRenderDrawBlendMode(RENDERER_MAIN, SDL_BLENDMODE_NONE);
+		SDL_SetRenderDrawColor(RENDERER_MAIN, 255, 255, 255, 255);
+
+
 
 		SDL_RenderPresent(RENDERER_MAIN);
 		auto to = std::chrono::high_resolution_clock::now();

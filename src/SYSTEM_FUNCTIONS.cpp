@@ -60,6 +60,32 @@ bool point_in_rect(const uint16_t px, const uint16_t py, const uint16_t rx, cons
 	return (px >= rx && py >= ry && px < (rx + rw) && py < (ry + rh));
 }
 
+void binaryfile_write(std::string const& fileName, std::string const& data)
+{
+	std::ofstream binFile(fileName, std::ios::out | std::ios::binary);
+	if (binFile.is_open())
+	{
+		size_t len = data.size();
+		binFile.write((char*)&len, sizeof(len));
+		binFile.write((char*)&data[0], len);
+
+		// No need. The file will be closed when the function returns.
+		// binFile.close();
+	}
+}
+
+void binaryfile_read(std::string const& fileName, std::string& data)
+{
+	std::ifstream binFile(fileName, std::ios::in | std::ios::binary);
+	if (binFile.is_open())
+	{
+		size_t len = 0;
+		binFile.read((char*)&len, sizeof(len));
+		data.resize(len);
+		binFile.read((char*)&data[0], len);
+	}
+}
+
 void confirm_input()
 {
 	UIBOX_ELEMENT_CLICK = nullptr;
@@ -96,7 +122,32 @@ void confirm_input()
 
 void INIT_FONT() {
 	
-	FONT = TTF_OpenFont("resources/FONT.ttf", 16);
+	SDL_Surface* surf = IMG_Load("resources/FONT");
+	if (surf == NULL)
+	{
+		std::cout << std::endl << "COULDN'T FIND THE RESOURCES FOLDER" << std::endl << std::endl;
+		SDL_SetWindowOpacity(WINDOW_MAIN, 0.0f);
+		while (1)
+		{
+			//
+		}
+	}
+	FONT_CHRW = 8;
+	FONT_CHRH = 16;
+
+	SDL_Surface* _tsurf;
+	SDL_Rect _rect = { 0,0,8,16 };
+	for (int i = 0; i < 256; i++)
+	{
+		_tsurf = SDL_CreateRGBSurfaceWithFormat(0, 8, 16, 32, SDL_PIXELFORMAT_RGBA32);
+		_rect = {(i % 16) * 8, (i / 16) * 16, 8 ,16};
+		SDL_BlitSurface(surf, &_rect, _tsurf, nullptr);
+		FONTMAP[i] = SDL_CreateTextureFromSurface(RENDERER_MAIN, _tsurf);
+		SDL_SetTextureBlendMode(FONTMAP[i], SDL_BLENDMODE_BLEND);
+		SDL_FreeSurface(_tsurf);
+	}
+
+	/*FONT = TTF_OpenFont("resources/FONT.ttf", 16);
 	if (FONT == NULL)
 	{
 		std::cout << std::endl << "COULDN'T FIND THE RESOURCES FOLDER" << std::endl << std::endl;
@@ -139,6 +190,44 @@ void INIT_FONT() {
 		SDL_SetTextureBlendMode(FONTMAP[i], SDL_BLENDMODE_BLEND);
 		SDL_FreeSurface(sur);
 	}
+
+	SDL_Surface* sur2 = SDL_CreateRGBSurfaceWithFormat(0, 16 * 8, 16 * 16, 32, SDL_PIXELFORMAT_RGBA32);
+	SDL_Rect _srect = { 0,0,8,16 };
+	SDL_Rect _drect = { 0,0,8,16 };
+	for (int j = 0; j < 16; j++)
+	for (int i = 0; i < 16; i++)
+	{
+		sur = TTF_RenderUTF8_Solid(FONT, char_map[j * 16 + i], SDL_Color{ 255, 255, 255, 255 });
+		_drect.x = i * 8;
+		_drect.y = j * 16;
+		SDL_BlitSurface(sur, &_srect, sur2, &_drect);
+		SDL_FreeSurface(sur);
+	}
+
+	IMG_SavePNG(sur2, "FONT.png");*/
+
+	/*const auto char_map2 =
+		u8" ☺☻♥♦♣♠•◘○◙♂♀♪♫☼"
+		u8"►◄↕‼¶§▬↨↑↓→←∟↔▲▼"
+		u8" !\"#$%&'()*+,-./"
+		u8"0123456789:;<=>?"
+		u8"@ABCDEFGHIJKLMNO"
+		u8"PQRSTUVWXYZ[\\]^_"
+		u8"`abcdefghijklmno"
+		u8"pqrstuvwxyz{|}~ "
+		u8"ÇüéâäàåçêëèïîìÄÅ"
+		u8"ÉæÆôöòûùÿÖÜ¢£¥₧ƒ"
+		u8"áíóúñÑªº¿⌐¬½¼¡«»"
+		u8"░▒▓│┤╡╢╖╕╣║╗╝╜╛┐"
+		u8"└┴┬├─┼╞╟╚╔╩╦╠═╬╧"
+		u8"╨╤╥╙╘╒╓╫╪┘┌█▄▌▐▀"
+		u8"αßΓπΣσµτΦΘΩδ∞φε∩"
+		u8"≡±≥≤⌠⌡÷≈°∙·√ⁿ²■ ";
+
+	sur = TTF_RenderUTF8_Solid(FONT, char_map2, SDL_Color{ 255, 255, 255, 255 });
+	//SDL_Texture* texture = SDL_CreateTextureFromSurface(RENDERER_MAIN, sur);
+	IMG_SavePNG(sur, "FONT.png");
+	SDL_FreeSurface(sur);*/
 }
 
 bool INIT() {
@@ -155,6 +244,7 @@ bool INIT() {
 		if (!SDL_SetHint(SDL_HINT_VIDEO_WINDOW_SHARE_PIXEL_FORMAT, "1")) PRINT("WARNING: SDL_HINT_VIDEO_WINDOW_SHARE_PIXEL_FORMAT NOT SET");
 		if (!SDL_SetHint(SDL_HINT_VIDEO_DOUBLE_BUFFER, "1")) PRINT("WARNING: SDL_HINT_VIDEO_DOUBLE_BUFFER NOT SET");
 		if (!SDL_SetHint(SDL_HINT_RENDER_VSYNC, "1")) PRINT("WARNING: SDL_HINT_RENDER_VSYNC NOT SET");
+		SDL_ShowCursor(0);
 		//if (!SDL_SetHint(SDL_HINT_MOUSE_FOCUS_CLICKTHROUGH, "1")) PRINT("WARNING: SDL_HINT_MOUSE_FOCUS_CLICKTHROUGH NOT SET");
 
 		//Create window

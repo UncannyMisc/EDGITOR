@@ -14,6 +14,10 @@ extern float sign(const float x);
 extern int ctoi(const char* s);
 
 extern bool point_in_rect(const uint16_t px, const uint16_t py, const uint16_t rx, const uint16_t ry, const uint16_t rw, const uint16_t rh);
+
+extern void binaryfile_write(std::string const& fileName, std::string const& data);
+extern void binaryfile_read(std::string const& fileName, std::string& data);
+
 struct UIBOX_ELEMENT_MAIN;
 extern UIBOX_ELEMENT_MAIN* UIBOX_ELEMENT_CLICK;
 extern void confirm_input();

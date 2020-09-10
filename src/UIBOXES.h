@@ -90,22 +90,22 @@ struct UIBOX_INFO {
 		}
 	}
 
-	void topbar_add_grab(uint8_t w)
+	void topbar_add_grab(uint8_t _w)
 	{
-		std::pair<TOPBAR_ELEMENT, std::pair<uint8_t, bool>> _t = { TOPBAR_ELEMENT::GRAB,{w,0} };
+		std::pair<TOPBAR_ELEMENT, std::pair<uint8_t, bool>> _t = { TOPBAR_ELEMENT::GRAB,{_w,0} };
 		topbar_elements.push_back(_t);
 	}
 
-	void topbar_add_shrink(uint8_t w)
+	void topbar_add_shrink(uint8_t _w)
 	{
-		std::pair<TOPBAR_ELEMENT, std::pair<uint8_t, bool>> _t = { TOPBAR_ELEMENT::SHRINK,{w,0} };
+		std::pair<TOPBAR_ELEMENT, std::pair<uint8_t, bool>> _t = { TOPBAR_ELEMENT::SHRINK,{_w,0} };
 		topbar_elements.push_back(_t);
 		uibox_set_string(this, STR_NBSP STR_ARWD STR_NBSP, chr_w - 4, 0, COL_EMPTY, false);
 	}
 
-	void topbar_add_pin(uint8_t w)
+	void topbar_add_pin(uint8_t _w)
 	{
-		std::pair<TOPBAR_ELEMENT, std::pair<uint8_t, bool>> _t = { TOPBAR_ELEMENT::PIN,{w,0} };
+		std::pair<TOPBAR_ELEMENT, std::pair<uint8_t, bool>> _t = { TOPBAR_ELEMENT::PIN,{_w,0} };
 		topbar_elements.push_back(_t);
 		uibox_set_string(this, STR_NBSP "\x09" STR_NBSP, chr_w - 7, 0, COL_EMPTY, false);
 	}

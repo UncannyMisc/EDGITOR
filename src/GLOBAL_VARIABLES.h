@@ -62,6 +62,7 @@ enum TOOL {
 	PICKER,
 	FILL,
 	PAN,
+	SELECT,
 };
 
 extern char PATH_SEP;
@@ -113,37 +114,42 @@ extern int16_t MOUSE_PREVY;
 
 extern bool MOUSEBUTTON_LEFT;
 extern bool MOUSEBUTTON_PRESSED_LEFT;
+extern bool MOUSEBUTTON_PREVLEFT;
 extern bool MOUSEBUTTON_MIDDLE;
 extern bool MOUSEBUTTON_PRESSED_MIDDLE;
+extern bool MOUSEBUTTON_PREVMIDDLE;
 extern bool MOUSEBUTTON_RIGHT;
 extern bool MOUSEBUTTON_PRESSED_RIGHT;
+extern bool MOUSEBUTTON_PREVRIGHT;
 extern int16_t MOUSEWHEEL_X;
+extern int16_t MOUSEWHEEL_PREVX;
 extern int16_t MOUSEWHEEL_Y;
+extern int16_t MOUSEWHEEL_PREVY;
 
 extern bool KEYBOARD_CTRL;
 extern bool KEYBOARD_PRESSED_CTRL;
+extern bool KEYBOARD_PREVCTRL;
 extern bool KEYBOARD_SHIFT;
 extern bool KEYBOARD_PRESSED_SHIFT;
+extern bool KEYBOARD_PREVSHIFT;
 extern bool KEYBOARD_ALT;
 extern bool KEYBOARD_PRESSED_ALT;
+extern bool KEYBOARD_PREVALT;
 extern bool KEYBOARD_SPACE;
 extern bool KEYBOARD_PRESSED_SPACE;
+extern bool KEYBOARD_PREVSPACE;
 extern bool KEYBOARD_ENTER;
 extern bool KEYBOARD_PRESSED_ENTER;
+extern bool KEYBOARD_PREVENTER;
 extern bool KEYBOARD_ESC;
 extern bool KEYBOARD_PRESSED_ESC;
-
-extern bool MOUSEBUTTON_PREVLEFT;
-extern bool MOUSEBUTTON_PREVMIDDLE;
-extern bool MOUSEBUTTON_PREVRIGHT;
-extern int16_t MOUSEWHEEL_PREVX;
-extern int16_t MOUSEWHEEL_PREVY;
-extern bool KEYBOARD_PREVCTRL;
-extern bool KEYBOARD_PREVSHIFT;
-extern bool KEYBOARD_PREVALT;
-extern bool KEYBOARD_PREVSPACE;
-extern bool KEYBOARD_PREVENTER;
 extern bool KEYBOARD_PREVESC;
+
+extern bool KEYBOARD_ANY;
+extern bool KEYBOARD_PRESSED_ANY;
+extern bool KEYBOARD_PREVANY;
+
+extern std::vector<bool> KEYSYM;
 
 extern bool FUNCTION_UNDO;
 extern bool FUNCTION_REDO;
