@@ -50,6 +50,31 @@ file(GLOB SOURCE
 	${PROJECT_SOURCE_DIR}/src/*.h
 )
 
+foreach(source_i IN LISTS SOURCE)
+    get_filename_component(source_path "${source_i}" PATH)
+
+    string(REPLACE "${PROJECT_SOURCE_DIR}/src" "" source_path_rel "${source_path}")
+
+    string(REPLACE "/" "\\" source_path_msvc "${source_path_rel}")
+
+    # Group into "UIBOXES" if its in the name
+    string(FIND "${source_i}" "UIBOX" OUT)
+    if(OUT GREATER -1)
+       set(source_path_msvc "UIBOXES\\${source_path_msvc}")
+    endif()
+
+    # Group into "Source Files" and "Header Files"
+    if ("${source_i}" MATCHES ".*\\.cpp")
+       set(GROUP "Source Files\\${source_path_msvc}")
+    elseif("${source_i}" MATCHES ".*\\.h")
+       set(GROUP "Header Files\\${source_path_msvc}")
+    endif()
+
+
+    source_group("${GROUP}" FILES "${source_i}")
+endforeach()
+
+
 add_executable(${PROJECT_NAME} ${SOURCE})
 
 if(UNIX)
