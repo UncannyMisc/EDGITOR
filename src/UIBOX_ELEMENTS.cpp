@@ -1,5 +1,6 @@
 #include "UIBOX_ELEMENTS.h"
 
+// update UIBOX element input from keyboard
 void UIBOX_INPUT_UPDATE()
 {
 	if (UIBOX_ELEMENT_CLICK != nullptr && UIBOX_ELEMENT_TYPE >= 0 && UIBOX_ELEMENT_CLICK->is_input)

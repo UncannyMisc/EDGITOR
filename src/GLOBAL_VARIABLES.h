@@ -51,7 +51,7 @@ enum FILE_TYPE {
 	MAP,
 	TEXT,
 
-	//
+	// New file types should always be added above UNSUPPORTED and below the Previously last FILE_TYPE
 
 	UNSUPPORTED,
 };

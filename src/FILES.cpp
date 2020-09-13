@@ -96,6 +96,7 @@ void open_file(std::filesystem::path path)
 	SDL_FreeSurface(_surf);
 }
 
+// file browsing
 void UPDATE_PATH_FILES()
 {
 	/*for (auto& _element : CURRENT_PATH)

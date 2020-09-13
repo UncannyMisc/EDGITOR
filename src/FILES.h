@@ -481,6 +481,7 @@ struct FILE_INFO_PIXELS : public FILE_INFO {
 		} while (lastRowLength != 0 && ++y < canvas_h);
 	}
 
+	// Tool Selectionand Usage Handling
 	void INPUT_LOOP() override
 	{
 		canvas_mouse_prevx = canvas_mouse_x;
@@ -708,6 +709,7 @@ struct FILE_INFO_PIXELS : public FILE_INFO {
 		else canvas_clicked = 0;
 	}
 
+	// applying changes to opened file and UNDO stack handling (UNDO_STACK.h)
 	void UPDATE_LOOP() override
 	{
 		if (layer_update == 2)
@@ -822,6 +824,7 @@ struct FILE_INFO_PIXELS : public FILE_INFO {
 		SDL_RenderFillRect(RENDERER_MAIN, &_trect);
 	}
 
+	// Render filetype
 	void RENDER_LOOP() override
 	{
 		SDL_Rect _q;

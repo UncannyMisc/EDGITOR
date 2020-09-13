@@ -5,6 +5,8 @@ UIBOX_INFO* UIBOX_PTR_HOME;
 UIBOX_INFO* UIBOX_PTR_FILE_EXPLORER;
 UIBOX_INFO* UIBOX_PTR_OPENED_FILES;
 
+//-- uibox helper functions
+
 void uibox_set_char(UIBOX_INFO* ui, uint16_t char_pos, uint8_t _chr, COLOR _col, bool update)
 {
 	if (_chr) ui->chr_chr[char_pos] = _chr; // set _chr to 0 to not update it
@@ -38,6 +40,8 @@ UIBOX_INFO* uibox_add(uint16_t _x, uint16_t _y, uint16_t _w, uint16_t _h, std::s
 	UIBOXES.push_back(std::move(new_uibox));
 	return UIBOXES.back().get();
 }
+
+//-- implimentations of uibox update functions
 
 void UIBOX_INFO_TOOLS::update_loop()
 {

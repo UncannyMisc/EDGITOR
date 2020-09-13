@@ -15,6 +15,17 @@ void UIBOX_INIT()
 	uibox_add_color(0, 9999, 512, 512, "COLOR", FILE_TYPE::PIXELS);
 }
 
+/*
+			UIBOX Interior elements -> UIBOX_ELEMENTS.h (buttons, lists, sub elements, unique element behaviour)
+				update UIBOX sub element chars
+				Handle UIBOX element behaviour
+			Unique UIBOX Behaviour -> UIBOXES.cpp
+				update_loop; update UIBOX sub element presence
+			
+			Render UIBOXES using the chars they have in chr_chr (boarders initialized in UIBOXES.h)
+			Handle UIBOX shrink
+			Handle mouse detection relative to current UIBOX
+*/
 void UIBOX_LOOP()
 {
 	int8_t _tUIBOX_IN = UIBOX_IN;
@@ -23,12 +34,14 @@ void UIBOX_LOOP()
 	UIBOX_INFO* uibox;
 	SDL_Rect rect;
 
+	//iterate through each uiBox
 	for (int8_t u = _tuibox_size; u >= 0; u--)
 	{
 		uibox = UIBOXES[u].get();
 
 		if (uibox->file_type >= FILE_TYPE::UNSUPPORTED || (uibox->file_type != FILE_TYPE::ALL && uibox->file_type != CURRENT_FILE_PTR_TYPE)) continue;
 
+		//update UIBOX positions
 		switch (uibox->align_x)
 		{
 		case 0: // no align
@@ -73,6 +86,7 @@ void UIBOX_LOOP()
 			break;
 		}
 		
+		//Handle UIBOX scrolling and mark for update
 		if (!UIBOX_IN_CLICK && (point_in_rect(MOUSE_X, MOUSE_Y, uibox->x, uibox->y, uibox->w, uibox->h) || point_in_rect(MOUSE_PREVX, MOUSE_PREVY, uibox->x, uibox->y, uibox->w, uibox->h)))
 		{
 			UIBOX_IN = u;
@@ -181,6 +195,7 @@ void UIBOX_LOOP()
 			uibox->y = (uint16_t)clamp(uibox->y, FONT_CHRH, WINDOW_MAIN_H - uibox->h);
 		}
 
+		//Handle UIBOX Interior elements (buttons, lists, sub elements, unique element behaviour)
 		if (!uibox->shrink)
 		{
 			if (!uibox->element_list.empty())
@@ -197,6 +212,7 @@ void UIBOX_LOOP()
 
 					if (_element->const_update)
 					{
+						// update UIBOX chars that will be rendered later
 						_element->update(uibox);
 						continue;
 					}
@@ -213,6 +229,8 @@ void UIBOX_LOOP()
 							{
 								//UIBOX_ELEMENT_CLICK = _element;
 								//std::cout << "          " << std::endl << UIBOX_ELEMENT_CLICK << std::endl;
+								
+								// Handle unique UIBOX Element behaviour
 								_element->set();
 								//std::cout << "          " << std::endl << UIBOX_ELEMENT_CLICK << std::endl;
 							}
@@ -223,6 +241,7 @@ void UIBOX_LOOP()
 							if (MOUSEBUTTON_PRESSED_LEFT)
 							{
 								//confirm_input();
+								// Handle unique UIBOX Element behaviour
 								_element->set();
 							}
 						}
@@ -247,6 +266,7 @@ void UIBOX_LOOP()
 					if (_t_update)
 					{
 						//if (!_element->tick_update) _element->tick_update = ELEMENT_UPDATE_TICK; else { --_element->tick_update; continue; }
+						// update UIBOX chars that will be rendered later
 						_element->update(uibox);
 					}
 				}
@@ -255,6 +275,7 @@ void UIBOX_LOOP()
 			if (uibox->update)
 			{
 				uibox->update = 0;
+				// update presence of UI elements for this UIBOX, sometimes ALSO updates UIBOX chars that will be rendered later
 				uibox->update_loop();
 			}
 		}
@@ -268,6 +289,7 @@ void UIBOX_LOOP()
 		SDL_Texture** _tchr;
 		COLOR* _tcol;
 
+		// render UIBOXES using the chars they have in chr_chr (boarders initialized in UIBOXES.h)
 		while (!uibox->update_stack.empty())
 		{
 			j = uibox->update_stack.top();
@@ -288,6 +310,7 @@ void UIBOX_LOOP()
 			SDL_RenderCopy(RENDERER_MAIN, *_tchr, NULL, &rect);
 		}
 
+		// not currently used, the above is used instead
 		uibox->draw_loop();
 
 		SDL_SetRenderTarget(RENDERER_MAIN, nullptr);

@@ -17,6 +17,8 @@ std::vector<PATH_FILES_INFO> CURRENT_PATH_FILES;
 std::string KEY_TEXT = "";
 int KEY_TEXT_INT = 0;
 
+// UIBOX
+
 int UIBOX_ELEMENT_TYPE = -1;
 int8_t UIBOX_IN = -1;
 
@@ -42,6 +44,8 @@ int WINDOW_MAIN_X = 0;
 int WINDOW_MAIN_Y = 0;
 int WINDOW_MAIN_W = 0;
 int WINDOW_MAIN_H = 0;
+
+// Input Vars
 
 int16_t MOUSE_X = 0;
 int16_t MOUSE_Y = 0;

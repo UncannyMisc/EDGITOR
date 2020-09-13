@@ -1,6 +1,8 @@
 ﻿
 #include "MAIN_LIBRARIES.h"
 
+// helper functions
+
 void PRINT(std::string print)
 {
 	std::cout << "          " << std::endl << print << std::endl;
@@ -60,6 +62,8 @@ bool point_in_rect(const uint16_t px, const uint16_t py, const uint16_t rx, cons
 	return (px >= rx && py >= ry && px < (rx + rw) && py < (ry + rh));
 }
 
+// binary file read/write
+
 void binaryfile_write(std::string const& fileName, std::string const& data)
 {
 	std::ofstream binFile(fileName, std::ios::out | std::ios::binary);
@@ -86,7 +90,7 @@ void binaryfile_read(std::string const& fileName, std::string& data)
 	}
 }
 
-void confirm_input()
+void confirm_input()// not currently used
 {
 	UIBOX_ELEMENT_CLICK = nullptr;
 	if (UIBOX_ELEMENT_TYPE >= 0)
@@ -118,7 +122,7 @@ void confirm_input()
 	UIBOX_ELEMENT_TYPE = -1;
 }
 
-//
+// initialization
 
 void INIT_FONT() {
 	

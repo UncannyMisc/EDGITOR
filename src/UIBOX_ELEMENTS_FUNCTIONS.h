@@ -7,6 +7,8 @@
 
 struct UIBOX_INFO;
 
+// uibox element helper functions for element presence
+
 extern void uibox_element_add_textbox(UIBOX_INFO* uibox, uint16_t x, uint16_t y, bool highlight, std::string text);
 template<typename T>
 extern void uibox_element_add_button(UIBOX_INFO* uibox, uint16_t x, uint16_t y, uint16_t w, uint16_t h, std::string text, std::string sel_text, T* input_var, T button_var);
