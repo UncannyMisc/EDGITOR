@@ -6,10 +6,18 @@
 
 #include "UIBOX_ELEMENTS.h"
 #include "CLIPBOARD.h"
-
+/*
+			key and mouse var reset
+			UIBox input update
+			Drag and Drop File input
+			key and mouse var set
+			Undo and Redo
+			Paste
+			Save File
+*/
 inline void EVENT_LOOP()
 {
-
+	// move last values
 	MOUSEBUTTON_PREVLEFT = MOUSEBUTTON_LEFT;
 	MOUSEBUTTON_PREVMIDDLE = MOUSEBUTTON_MIDDLE;
 	MOUSEBUTTON_PREVRIGHT = MOUSEBUTTON_RIGHT;
@@ -25,6 +33,7 @@ inline void EVENT_LOOP()
 
 	KEYBOARD_PREVANY = KEYBOARD_ANY;
 
+	// reset current values
 	MOUSEBUTTON_PRESSED_LEFT = 0;
 	MOUSEBUTTON_PRESSED_MIDDLE = 0;
 	MOUSEBUTTON_PRESSED_RIGHT = 0;
@@ -51,6 +60,7 @@ inline void EVENT_LOOP()
 	MOUSE_X = (DISPLAY_MOUSE_X - WINDOW_MAIN_X);
 	MOUSE_Y = (DISPLAY_MOUSE_Y - WINDOW_MAIN_Y);
 
+	// update UIBOX element input from keyboard
 	auto KEY_TEXT_UPDATE = []
 	{
 		KEY_TEXT_INT = ctoi(KEY_TEXT.c_str());
@@ -60,6 +70,7 @@ inline void EVENT_LOOP()
 
 	SDL_Event EVENT{};
 
+	// convert between SDL events and useful global values
 	while (SDL_PollEvent(&EVENT))
 	{
 		switch (EVENT.type)
@@ -92,6 +103,7 @@ inline void EVENT_LOOP()
 			}
 			break;
 
+			// user inputs
 		case SDL_MOUSEBUTTONUP:
 			switch (EVENT.button.button)
 			{
@@ -185,6 +197,7 @@ inline void EVENT_LOOP()
 				}
 			}
 
+			// Undo, Redo, Paste and Save
 			if (keysym.mod & KMOD_CTRL) {
 				switch (keysym.sym) {
 				case SDLK_z: {

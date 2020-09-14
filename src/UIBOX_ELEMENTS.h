@@ -172,6 +172,7 @@ struct UIBOX_ELEMENT_CREATE_FILE : public UIBOX_ELEMENT_MAIN {
 		uibox_set_string(uibox, text, x, y, COL_BGUPDATE, uibox->update);
 	}
 
+	// create new file of type NEW_FILE_TYPE
 	void set() override
 	{
 		if (NEW_FILE_PIXELS_CANVAS_W <= 0 || NEW_FILE_PIXELS_CANVAS_H <= 0) return;

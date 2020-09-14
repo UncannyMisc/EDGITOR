@@ -9,6 +9,7 @@
 
 int main(int, char* [])
 {
+	// init resources, sdl, fonts, etc
 	if (!INIT())
 	{
 		PRINT("COULD NOT START EDGITOR");
@@ -31,6 +32,34 @@ int main(int, char* [])
 
 	SDL_EventState(SDL_DROPFILE, SDL_ENABLE);
 
+
+	/*
+	main loop Pipeline is as follows->
+		Reset Render Targets
+		update input vars-> (EVENT_LOOP.h)
+			key and mouse var reset
+			UIBox input update
+			Drag and Drop File input
+			key and mouse var set
+			Undo and Redo
+			Paste
+			Save File
+		handle filetype-dependant behaviour -> (FILES.h)
+			INPUT_LOOP; Tool Selection and Usage Handling
+			UPDATE_LOOP; applying changes to opened file and UNDO stack handling
+			RENDER_LOOP; Render filetype
+		handle uiBox behaviour -> (UIBOX_LOOP.cpp)
+			iterate through each uiBox for the following
+			update UIBOX positions
+			Handle UIBOX scrolling and mark for update
+			Handle UIBOX TOPBAR ELEMENTS (grab, shrink, close, etc)
+			Handle UIBOX Interior elements (buttons, lists, sub elements, Unique behaviour) ->(UIBOX_ELEMENTS.h)
+			Render UIBOX sub elements
+			Handle UIBOX shrink
+			Handle mouse detection relative to current UIBOX
+		render cursor
+		present updated render to screen
+	*/
 	while (!QUIT)
 	{
 		auto from = std::chrono::high_resolution_clock::now();
@@ -46,11 +75,14 @@ int main(int, char* [])
 			KEYSYM.push_back(false);
 		}
 
+		// Update input vars
 		EVENT_LOOP();
+
 		/*INPUT_LOOP();
 		UPDATE_LOOP();
 		RENDER_LOOP();*/
 
+		// handle filetype unique behaviour
 		switch (CURRENT_FILE_PTR_TYPE)
 		{
 		case EMPTY:
@@ -68,6 +100,7 @@ int main(int, char* [])
 			break;
 		}
 
+		// update uibox states and elements then render them
 		UIBOX_LOOP();
 
 		SDL_SetRenderDrawColor(RENDERER_MAIN, 255, 255, 255, 255);
@@ -75,6 +108,7 @@ int main(int, char* [])
 		SDL_SetRenderDrawBlendMode(RENDERER_MAIN, blend_invert);
 		//SDL_SetRenderDrawBlendMode(RENDERER_MAIN, SDL_BLENDMODE_ADD);
 
+		// cursor
 		SDL_RenderDrawLine(RENDERER_MAIN, MOUSE_X - 3, MOUSE_Y - 4, MOUSE_X + 4, MOUSE_Y + 3);
 		SDL_RenderDrawLine(RENDERER_MAIN, MOUSE_X - 4, MOUSE_Y - 4, MOUSE_X + 4, MOUSE_Y + 4);
 		SDL_RenderDrawLine(RENDERER_MAIN, MOUSE_X - 4, MOUSE_Y - 3, MOUSE_X + 3, MOUSE_Y + 4);
@@ -124,6 +158,7 @@ int main(int, char* [])
 
 
 
+		// show what was rendered
 		SDL_RenderPresent(RENDERER_MAIN);
 		auto to = std::chrono::high_resolution_clock::now();
 		std::cout << (double)(std::chrono::duration_cast<std::chrono::duration<double>>(to - from).count() * 1000.0) << "ms    " << '\r';

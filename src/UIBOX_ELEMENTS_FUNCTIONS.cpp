@@ -2,6 +2,8 @@
 #include "UIBOX_ELEMENTS_FUNCTIONS.h"
 #include "UIBOX_ELEMENTS.h"
 
+// uibox element helper functions for element presence
+
 void uibox_element_add_textbox(UIBOX_INFO* uibox, uint16_t x, uint16_t y, bool highlight, std::string text)
 {
 	std::shared_ptr<UIBOX_ELEMENT_TEXTBOX> _element = std::make_shared<UIBOX_ELEMENT_TEXTBOX>();

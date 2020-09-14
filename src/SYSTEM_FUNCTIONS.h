@@ -1,5 +1,5 @@
 #pragma once
-
+// helper functions
 extern void PRINT(std::string print);
 extern void PRINT(const char* print);
 extern void PRINT(int print);
@@ -20,9 +20,9 @@ extern void binaryfile_read(std::string const& fileName, std::string& data);
 
 struct UIBOX_ELEMENT_MAIN;
 extern UIBOX_ELEMENT_MAIN* UIBOX_ELEMENT_CLICK;
-extern void confirm_input();
+extern void confirm_input(); // not currently used
 
-//
+// initialization
 
 extern void INIT_FONT();
 
