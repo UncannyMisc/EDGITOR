@@ -11,7 +11,7 @@ void add_file_pixels(FILE_TYPE type, std::filesystem::path path, std::string fil
 		canvas_h);
 
 	CURRENT_FILE = OPEN_FILES.size();
-	CURRENT_FILE_PTR_PIXELS = new_file;
+	CURRENT_FILE_PTR = new_file;
 	CURRENT_FILE_PTR_TYPE = type;
 
 	UIBOX_PTR_FILE_EXPLORER->update = true;
@@ -20,6 +20,48 @@ void add_file_pixels(FILE_TYPE type, std::filesystem::path path, std::string fil
 	OPEN_FILES.push_back(std::move(new_file));
 }
 
+void load_file_pixels(std::filesystem::path path)
+{
+	std::shared_ptr<FILE_INFO_PIXELS> PixelPointer = std::static_pointer_cast<FILE_INFO_PIXELS>(CURRENT_FILE_PTR);
+
+	// todo, decouple rendering file format from filetype pixels loading
+	PRINT("LOADING IMAGE...");
+	auto from = std::chrono::high_resolution_clock::now();
+
+	SDL_Surface* _surfload;
+	_surfload = IMG_Load(path.string().c_str());
+	if (!_surfload)
+	{
+		PRINT("CANNOT LOAD FILE");
+		return;
+	}
+
+	SDL_Surface* _surf = SDL_ConvertSurfaceFormat(_surfload, SDL_PIXELFORMAT_RGBA32, 0);
+	SDL_FreeSurface(_surfload);
+
+	add_file_pixels(FILE_TYPE::PIXELS, path, path.filename().string(), _surf->w, _surf->h);
+	PixelPointer->current_layer_ptr->texture = SDL_CreateTextureFromSurface(RENDERER_MAIN, _surf);
+
+	const auto size = (PixelPointer->canvas_w * PixelPointer->canvas_h);
+	const COLOR* src = static_cast<const COLOR*>(_surf->pixels);
+
+	auto& _pd = (PixelPointer->current_layer_ptr->pixels);
+
+	std::copy(src, src + size, _pd.get());
+
+	/*auto _ps = ((COLOR*)_surf->pixels);
+	auto &_pd = (CURRENT_FILE_PTR_PIXELS->current_layer_ptr->pixels);
+	auto _ts = (CURRENT_FILE_PTR_PIXELS->canvas_w * CURRENT_FILE_PTR_PIXELS->canvas_h);
+	for (uint32_t i = 0; i < _ts; i++)
+	{
+		_pd[i] = _ps[i];
+	}*/
+
+	auto to = std::chrono::high_resolution_clock::now();
+	std::cout << "LOADED IN: " << std::chrono::duration_cast<std::chrono::duration<double>>(to - from).count() << " seconds" << std::endl << std::endl;
+
+	SDL_FreeSurface(_surf);
+}
 void open_file(std::filesystem::path path)
 {
 	MOUSEBUTTON_LEFT = 0;
@@ -38,13 +80,15 @@ void open_file(std::filesystem::path path)
 		{
 			CURRENT_FILE = i;
 			CURRENT_FILE_PTR_TYPE = _f->type;
-			
+
+			CURRENT_FILE_PTR = OPEN_FILES[i];
+			/*
 			switch (CURRENT_FILE_PTR_TYPE)
 			{
 			case EMPTY:
 				break;
 			case PIXELS:
-				CURRENT_FILE_PTR_PIXELS = std::static_pointer_cast<FILE_INFO_PIXELS>(OPEN_FILES[i]);
+				CURRENT_FILE_PTR = OPEN_FILES[i];
 				break;
 			case MAP:
 				break;
@@ -52,48 +96,15 @@ void open_file(std::filesystem::path path)
 				break;
 			default:
 				break;
-			}
+			}*/
 
 			return;
 		}
 	}
+	//else file has not been loaded yet
+	// todo detect the ".type" of the file (ignore if selected "all files" type)
+	load_file_pixels(path);
 
-	PRINT("LOADING IMAGE...");
-	auto from = std::chrono::high_resolution_clock::now();
-
-	SDL_Surface* _surfload;
-	_surfload = IMG_Load(path.string().c_str());
-	if (!_surfload)
-	{
-		PRINT("CANNOT LOAD FILE");
-		return;
-	}
-
-	SDL_Surface* _surf = SDL_ConvertSurfaceFormat(_surfload, SDL_PIXELFORMAT_RGBA32, 0);
-	SDL_FreeSurface(_surfload);
-
-	add_file_pixels(FILE_TYPE::PIXELS, path, path.filename().string(), _surf->w, _surf->h);
-	CURRENT_FILE_PTR_PIXELS->current_layer_ptr->texture = SDL_CreateTextureFromSurface(RENDERER_MAIN, _surf);
-		
-	const auto size = (CURRENT_FILE_PTR_PIXELS->canvas_w * CURRENT_FILE_PTR_PIXELS->canvas_h);
-	const COLOR* src = static_cast<const COLOR*>(_surf->pixels);
-
-	auto &_pd = (CURRENT_FILE_PTR_PIXELS->current_layer_ptr->pixels);
-
-	std::copy(src, src + size, _pd.get());
-
-	/*auto _ps = ((COLOR*)_surf->pixels);
-	auto &_pd = (CURRENT_FILE_PTR_PIXELS->current_layer_ptr->pixels);
-	auto _ts = (CURRENT_FILE_PTR_PIXELS->canvas_w * CURRENT_FILE_PTR_PIXELS->canvas_h);
-	for (uint32_t i = 0; i < _ts; i++)
-	{
-		_pd[i] = _ps[i];
-	}*/
-
-	auto to = std::chrono::high_resolution_clock::now();
-	std::cout << "LOADED IN: " << std::chrono::duration_cast<std::chrono::duration<double>>(to - from).count() << " seconds" << std::endl << std::endl;
-		
-	SDL_FreeSurface(_surf);
 }
 
 // file browsing
@@ -142,7 +153,7 @@ std::vector<std::shared_ptr<FILE_INFO>> OPEN_FILES;
 
 int CURRENT_FILE = -1;
 FILE_TYPE CURRENT_FILE_PTR_TYPE = FILE_TYPE::EMPTY;
-std::shared_ptr<FILE_INFO_PIXELS> CURRENT_FILE_PTR_PIXELS = nullptr;
+std::shared_ptr<FILE_INFO> CURRENT_FILE_PTR = nullptr;
 
 
 

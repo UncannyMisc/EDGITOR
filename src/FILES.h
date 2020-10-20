@@ -32,6 +32,11 @@ struct KEYCODE_INFO {
 	uint16_t key4;
 	uint8_t keyn;
 };
+struct TOOLBUTTON_INFO {
+	int toolid;
+	std::string unselected;
+	std::string selected;
+};
 
 struct FILE_INFO {
 	FILE_TYPE type = FILE_TYPE::EMPTY;
@@ -40,7 +45,11 @@ struct FILE_INFO {
 	uint16_t undo_pos = 0;
 
 	enum KEYCODE {};
+	enum TOOL {};
 	std::vector<KEYCODE_INFO> KEYCODES;
+	std::vector<TOOLBUTTON_INFO> TOOLBUTTONS;
+
+	int CURRENT_TOOL = 0;
 
 	bool modified = false;
 
@@ -49,10 +58,16 @@ struct FILE_INFO {
 	{
 		KEYCODES.push_back(KEYCODE_INFO{ k,key1,key2,key3,key4,(uint8_t)((uint8_t)(key1 > 0) + (uint8_t)(key2 > 0) + (uint8_t)(key3 > 0) + (uint8_t)(key4 > 0)) });
 	}
+	void add_toolbutton(int k, std::string unsel, std::string sel)
+	{
+		TOOLBUTTONS.push_back(TOOLBUTTON_INFO{ k,unsel, sel });
+	}
 
 	virtual void INPUT_LOOP() {};
 	virtual void UPDATE_LOOP() {};
 	virtual void RENDER_LOOP() {};
+
+	virtual void SAVE_FILE() {};
 
 	virtual void apply_undo_data(UNDO_ENTRY_PIXELS*, bool) {};
 
@@ -172,6 +187,15 @@ struct FILE_INFO_PIXELS : public FILE_INFO {
 		function_toggle_grid,
 
 		KEYCODE_N
+	};
+
+	enum TOOL {
+		BRUSH,
+		ERASER,
+		PICKER,
+		FILL,
+		PAN,
+		SELECT,
 	};
 
 	inline void add_layer_pixels(std::shared_ptr<FRAME_INFO_PIXELS> frame, int16_t _x, int16_t _y, int16_t _a, /*SDL_BlendMode*/ int _b)
@@ -296,6 +320,28 @@ struct FILE_INFO_PIXELS : public FILE_INFO {
 
 		add_keycode(KEYCODE::function_zoom_in, SDL_SCANCODE_LCTRL, SDL_SCANCODE_EQUALS, 0, 0);
 		add_keycode(KEYCODE::function_zoom_out, SDL_SCANCODE_LCTRL, SDL_SCANCODE_MINUS, 0, 0);
+
+		add_toolbutton(TOOL::BRUSH, "BRUSH", "> BRUSH");
+		add_toolbutton(TOOL::ERASER, "ERASER", "> ERASER");
+		add_toolbutton(TOOL::PICKER, "PICKER", "> PICKER");
+		add_toolbutton(TOOL::FILL, "FILL", "> FILL");
+		add_toolbutton(TOOL::PAN, "PAN", "> PAN");
+		add_toolbutton(TOOL::SELECT, "SELECT", "> SELECT");
+	}
+
+	virtual void SAVE_FILE() override
+	{
+
+		SDL_Surface* _tsurf = SDL_CreateRGBSurfaceWithFormat(0, canvas_w, canvas_h, 32, SDL_PIXELFORMAT_RGBA32);
+
+		auto layer = current_layer_ptr;// CURRENT_FRAME_PTR->layers[0];
+		for (int i = 0; i < canvas_w * canvas_h; i++)
+		{
+			((COLOR*)_tsurf->pixels)[i] = layer->pixels[i]; // THERE ISN'T MULTI-LAYER BLENDING YET
+		}
+		std::string _tpath = filename;// (CURRENT_PATH + CURRENT_FILE);
+		IMG_SavePNG(_tsurf, _tpath.c_str());
+		SDL_FreeSurface(_tsurf);
 	}
 
 	void set_pixel(const uint32_t x, const uint32_t y, const COLOR c, COLOR* p)
@@ -650,8 +696,8 @@ struct FILE_INFO_PIXELS : public FILE_INFO {
 					{
 						CURRENT_TOOL = TOOL::ERASER;
 					}
-					else
-					if (CURRENT_TOOL == TOOL::ERASER) {
+					else if (CURRENT_TOOL == TOOL::ERASER)
+					{
 						CURRENT_TOOL = TOOL::BRUSH;
 					}
 					set_pixel_line(canvas_mouse_prevx, canvas_mouse_prevy, canvas_mouse_x, canvas_mouse_y, brush_color[current_brush_color]);
@@ -966,6 +1012,7 @@ struct FILE_INFO_PIXELS : public FILE_INFO {
 //extern void add_layer_pixels(std::shared_ptr<FILE_INFO_PIXELS> file, std::shared_ptr<FRAME_INFO_PIXELS> frame, int16_t _x, int16_t _y, int16_t _a, /*SDL_BlendMode*/ int _b);
 //extern void add_frame_pixels(std::shared_ptr<FILE_INFO_PIXELS> file, int frame_time);
 extern void add_file_pixels(FILE_TYPE type, std::filesystem::path path, std::string filename, uint16_t canvas_w, uint16_t canvas_h);
+extern void load_file_pixels(std::filesystem::path path);
 extern void open_file(std::filesystem::path path);
 
 extern void UPDATE_PATH_FILES();
@@ -973,5 +1020,5 @@ extern void UPDATE_PATH_FILES();
 extern std::vector<std::shared_ptr<FILE_INFO>> OPEN_FILES;
 extern int CURRENT_FILE;
 extern FILE_TYPE CURRENT_FILE_PTR_TYPE;
-extern std::shared_ptr<FILE_INFO_PIXELS> CURRENT_FILE_PTR_PIXELS;
+extern std::shared_ptr<FILE_INFO> CURRENT_FILE_PTR; //todo, is this really needed when we can grab it using the current file int?
 //extern std::shared_ptr<FILE_INFO_PIXELS> CURRENT_FILE_PTR_MAP;

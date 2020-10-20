@@ -227,6 +227,7 @@ inline void EVENT_LOOP()
 					break;
 				}
 				case SDLK_s: {
+					/*
 					SDL_Surface* _tsurf = SDL_CreateRGBSurfaceWithFormat(0, CURRENT_FILE_PTR_PIXELS->canvas_w, CURRENT_FILE_PTR_PIXELS->canvas_h, 32, SDL_PIXELFORMAT_RGBA32);
 
 					auto layer = CURRENT_FILE_PTR_PIXELS->current_layer_ptr;// CURRENT_FRAME_PTR->layers[0];
@@ -237,6 +238,9 @@ inline void EVENT_LOOP()
 					std::string _tpath = CURRENT_FILE_PTR_PIXELS->filename;// (CURRENT_PATH + CURRENT_FILE);
 					IMG_SavePNG(_tsurf, _tpath.c_str());
 					SDL_FreeSurface(_tsurf);
+					*/
+					if (!CURRENT_FILE_PTR) break;
+					CURRENT_FILE_PTR->SAVE_FILE();
 					break;
 				}
 				default: break;

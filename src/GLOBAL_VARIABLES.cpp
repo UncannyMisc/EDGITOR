@@ -95,5 +95,4 @@ std::vector<bool> KEYSYM;
 bool FUNCTION_UNDO = false;
 bool FUNCTION_REDO = false;
 
-int CURRENT_TOOL = 0;
 int TEMP_CURRENT_TOOL = 0;

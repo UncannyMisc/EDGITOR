@@ -45,12 +45,19 @@ UIBOX_INFO* uibox_add(uint16_t _x, uint16_t _y, uint16_t _w, uint16_t _h, std::s
 
 void UIBOX_INFO_TOOLS::update_loop()
 {
+	for (size_t i = 0; i < OPEN_FILES[CURRENT_FILE]->TOOLBUTTONS.capacity(); i++)
+	{
+		//todo, clean up this signature
+		uibox_element_add_button<int>(this, 2, 2+i, 0, 1, OPEN_FILES[CURRENT_FILE]->TOOLBUTTONS[i].unselected, OPEN_FILES[CURRENT_FILE]->TOOLBUTTONS[i].selected, &(OPEN_FILES[CURRENT_FILE]->CURRENT_TOOL), OPEN_FILES[CURRENT_FILE]->TOOLBUTTONS[i].toolid);
+	}
+	/*
 	uibox_element_add_button<int>(this, 2, 2, 0, 1, "BRUSH", "> BRUSH", &CURRENT_TOOL, TOOL::BRUSH);
 	uibox_element_add_button<int>(this, 2, 3, 0, 1, "ERASER", "> ERASER", &CURRENT_TOOL, TOOL::ERASER);
 	uibox_element_add_button<int>(this, 2, 4, 0, 1, "PICKER", "> PICKER", &CURRENT_TOOL, TOOL::PICKER);
 	uibox_element_add_button<int>(this, 2, 5, 0, 1, "FILL", "> FILL", &CURRENT_TOOL, TOOL::FILL);
 	uibox_element_add_button<int>(this, 2, 6, 0, 1, "PAN", "> PAN", &CURRENT_TOOL, TOOL::PAN);
 	uibox_element_add_button<int>(this, 2, 6, 0, 1, "SELECT", "> SELECT", &CURRENT_TOOL, TOOL::SELECT);
+	*/
 }
 UIBOX_INFO* uibox_add_tools(uint16_t _x, uint16_t _y, uint16_t _w, uint16_t _h, std::string title, int _file_type)
 {
@@ -371,7 +378,7 @@ void UIBOX_INFO_COLOR::draw_loop()
 	SDL_Rect _trect = { FONT_CHRW * 2,FONT_CHRH * 2,256,256 };
 	//SDL_RenderCopy(RENDERER_MAIN, gradient, nullptr, &_trect);
 }
-void UIBOX_INFO_COLOR::update_loop()
+void UIBOX_INFO_COLOR::update_loop() //todo, framerate bug when moving window
 {
 	COLOR _tcol;
 	uint8_t _w = 42;
@@ -398,7 +405,8 @@ void UIBOX_INFO_COLOR::update_loop()
 	PRINT((int)new_col.g);
 	PRINT((int)new_col.b);
 	PRINT((int)new_col.a);
-	CURRENT_FILE_PTR_PIXELS->brush_color[CURRENT_FILE_PTR_PIXELS->current_brush_color] = new_col;
+	//todo, make independant of pixels filetype
+	std::static_pointer_cast<FILE_INFO_PIXELS>(CURRENT_FILE_PTR)->brush_color[std::static_pointer_cast<FILE_INFO_PIXELS>(CURRENT_FILE_PTR)->current_brush_color] = new_col;
 
 	element_list.clear();
 

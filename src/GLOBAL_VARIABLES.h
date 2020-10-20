@@ -56,15 +56,6 @@ enum FILE_TYPE {
 	UNSUPPORTED,
 };
 
-enum TOOL {
-	BRUSH,
-	ERASER,
-	PICKER,
-	FILL,
-	PAN,
-	SELECT,
-};
-
 extern char PATH_SEP;
 
 struct PATH_FILES_INFO {
@@ -151,13 +142,13 @@ extern bool KEYBOARD_PREVANY;
 
 extern std::vector<bool> KEYSYM;
 
+//todo, this is unused, there is also a version implimented for this in the pixels filetype
 extern bool FUNCTION_UNDO;
 extern bool FUNCTION_REDO;
 
-extern int CURRENT_TOOL;
 extern int TEMP_CURRENT_TOOL;
 
-//
+//note, the open file variables are in FILES.h
 
 const uint8_t CHAR_NBSP = 0xffu; // no-break space
 #define STR_NBSP "\xff"

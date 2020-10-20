@@ -83,14 +83,15 @@ int main(int, char* [])
 		RENDER_LOOP();*/
 
 		// handle filetype unique behaviour
+		/*
 		switch (CURRENT_FILE_PTR_TYPE)
 		{
 		case EMPTY:
 			break;
 		case PIXELS:
-			CURRENT_FILE_PTR_PIXELS->INPUT_LOOP();
-			CURRENT_FILE_PTR_PIXELS->UPDATE_LOOP();
-			CURRENT_FILE_PTR_PIXELS->RENDER_LOOP();
+			CURRENT_FILE_PTR->INPUT_LOOP();
+			CURRENT_FILE_PTR->UPDATE_LOOP();
+			CURRENT_FILE_PTR->RENDER_LOOP();
 			break;
 		case MAP:
 			break;
@@ -98,6 +99,11 @@ int main(int, char* [])
 			break;
 		default:
 			break;
+		}*/
+		if (CURRENT_FILE_PTR_TYPE != EMPTY && CURRENT_FILE_PTR_TYPE < UNSUPPORTED) {
+			CURRENT_FILE_PTR->INPUT_LOOP();
+			CURRENT_FILE_PTR->UPDATE_LOOP();
+			CURRENT_FILE_PTR->RENDER_LOOP();
 		}
 
 		// update uibox states and elements then render them
